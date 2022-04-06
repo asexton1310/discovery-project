@@ -3,7 +3,8 @@
 # 2: Drop packets by specifiyng packet size in bytes, randomly drop packets from a video file 
 #    either as a percentage, or a count of packets to drop
 # 3: Add salt & pepper noise bytewise or bitwise. Specifying a % rate for bytes/bits to affect
-# 4: Add Gaussian noise or blur
+# 4: Add Gaussian noise or blur - Causes color distortions.
+# 5: Add blockiness to a video
 
 # if i was also able to figure out when important information, like transform coefficients, 
 # are lost in packets, that could be a great way of indicating when the quality is worse (like in the patent I looked at)
@@ -218,6 +219,18 @@ def cvGaussNoise(in_filename, out_filename):
             break
     cap.release()
 
+def ffmpegBlockiness(in_filename, out_filename, blockiness):
+    # use ffmpeg to add blockiness to an image
+    # in_filename  -  name of input video
+    # out_filename -  name of output video
+    # blockiness   -  an int larger than 2, larger numbers result in lower quality.
+    #                 Reductions of quality seem to become less noticeable around 5000
+    out_fname, ext = os.path.splitext(out_filename) # split filename from extension
+    
+    #  apply filter using ffmpeg command line
+    os.system("ffmpeg -i {0} -c:v mpeg2video -q:v {1} -c:a copy {2}.ts".format(in_filename, blockiness, out_fname))
+    os.system("ffmpeg -i {0}.ts -c:v libx264 {1}".format(out_fname, out_filename))
+
 def ffmpegLoop(input_path, output_path):
     # parse all videos within a folder using a given (currently hardcoded) ffmpeg command
     # input_path  -  path to folder containing input videos
@@ -249,13 +262,15 @@ def extraErrorLoop(input_path, output_path, error_rate):
 
     salt_pepper_rate = 0.01           # percentage rate of salt and pepper noise, as a float from 0.0 to 1.0
 
+    blockiness = 1000                 # blockiness value. higher number results in more noticeable blocks. min value is 2.
+
     #  get a pseudorandom seed, output seed so we can reproduce for testing,
     #  and then set the seed
     seed = random.random()
     print("Seed: ",seed,"\n")
     random.seed(seed)  
 
-    step = error_rate / 6    
+    step = error_rate / 7    
 
     for filename in os.listdir(input_path):
         fname, ext = os.path.splitext(filename) # split filename from extension
@@ -298,6 +313,11 @@ def extraErrorLoop(input_path, output_path, error_rate):
             out_filename = out_file_prefix + "-gaussBlur" + ext
             
             cvGaussBlur(in_filename, out_filename)
+        elif 6 * step <= mode < 7 * step:
+            # blockiness
+            out_filename = out_file_prefix + "-blocks" + ext
+
+            ffmpegBlockiness(in_filename, out_filename, blockiness)
         else:
             # no additional distortion
             out_filename = out_file_prefix + "-noDistortion" + ext
@@ -357,7 +377,6 @@ def extractFrameLoop(input_path, output_path, sample_rate):
         print(filename, " extract frames")
 
         extractFrames(in_filepath, fname, output_dir, sample_rate)
-
 
 ffmpegLoop('./inputVideos/', './encodedVideos/')
 extraErrorLoop('./encodedVideos/', './distortedVideos/', 1)
