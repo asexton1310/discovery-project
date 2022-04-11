@@ -6,11 +6,6 @@
 # 4: Add Gaussian noise or blur - Causes color distortions.
 # 5: Add blockiness to a video
 
-# if i was also able to figure out when important information, like transform coefficients, 
-# are lost in packets, that could be a great way of indicating when the quality is worse (like in the patent I looked at)
-
-# TODO try to introduce ringing and banding error functions
-
 from math import floor
 import random
 import os.path
@@ -231,6 +226,42 @@ def ffmpegBlockiness(in_filename, out_filename, blockiness):
     os.system("ffmpeg -i {0} -c:v mpeg2video -q:v {1} -c:a copy {2}.ts".format(in_filename, blockiness, out_fname))
     os.system("ffmpeg -i {0}.ts -c:v libx264 {1}".format(out_fname, out_filename))
 
+def colorNoise(in_filename, out_filename):
+    # openCV gaussian noise taken from: https://theailearner.com/tag/cv2-randn/
+    # uses openCV to extract one frame at a time, adds gaussian noise and writes the frame to the output file
+
+    cap = cv2.VideoCapture(in_filename)
+    if not cap.isOpened():
+        print("Couldn't open video.")
+    # get width and height of frame from video
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    #select codec for writing the distorted video. avc1 is codec used. (https://www.fourcc.org/codecs.php)
+    outfile = cv2.VideoWriter(out_filename, cv2.VideoWriter_fourcc(*'avc1'), 30, (frame_width, frame_height))
+
+    while (cap.isOpened()):
+        # get each frame of video
+        ret, frame = cap.read()
+        #print("Frame:\n",frame)
+        if ret:
+            mean = (0,0,0)
+            sigma = (25, 0, 25)
+            # copy the frame to get another, correct-size, frame to hold the noise
+            gauss = frame.copy()
+            #print("gauss1:\n",gauss )
+            # generate the noise and replace the copied frame gauss
+            cv2.randn(gauss, mean, sigma)
+            #print("gauss2:\n",gauss)
+            #add noise to the frame
+            out = frame + gauss
+            #print("Out:\n",out)
+            #write frame
+            outfile.write(out)
+        else:
+            #no frames left so leave loop
+            break
+    cap.release()
+
 def ffmpegLoop(input_path, output_path):
     # parse all videos within a folder using a given (currently hardcoded) ffmpeg command
     # input_path  -  path to folder containing input videos
@@ -380,45 +411,5 @@ def extractFrameLoop(input_path, output_path, sample_rate):
 
 ffmpegLoop('./inputVideos/', './encodedVideos/')
 extraErrorLoop('./encodedVideos/', './distortedVideos/', 1)
-extraErrorLoop('./distortedVideos/', './doubledistortedVideos/', 0.5)
+#extraErrorLoop('./distortedVideos/', './doubledistortedVideos/', 0.5)
 extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
-
-# prompt for file input, could be replaced with hardcoding or reading a config file
-# to automate the script better 
-# in_filename = input("Enter the input video filename: ")
-#out_filename = input("Enter the output video filename: ")
-#print("Enter 1 for to use a bitmask in a file, 2 to simulate packet loss mode,")
-#mode = input("3 to add salt and pepper noise, 4 to add Gaussian noise/blur. Also removes audio. (default): ")
-
-#if mode == "1":
-    # if bitmask chosen, get the bitmask filename
-#    mask_filename = input("Enter the error bit mask filename: ")
-#    bytes_to_read = 1
-#    bitmaskParse(in_filename, out_filename, mask_filename, bytes_to_read)
-#elif mode == "2": 
-    # if packet loss chosen, get the % rate or count of dropped packets
-#    bytes_to_read = int(input("Enter the packet size as an integer: "))
-#    user_num = input("Enter the rate of lost packets as percentage (end with % symbol) or as an integer count: ")
-#    if "%" in user_num:
-#        rate = float("".join(ch for ch in user_num if ch.isdecimal() or ch in "."))
-#        packetRateParse(in_filename, out_filename, rate, bytes_to_read)
-#    else:
-#        count = int("".join(filter(str.isdecimal, user_num)))
-#        packetCountParse(in_filename, out_filename, count, bytes_to_read)
-#elif mode == "3":
-    # if salt and pepper noise was chosen, get the rate
-#    user_num = input("Enter the rate of noise as percentage: ")
-#    rate = float("".join(ch for ch in user_num if ch.isdecimal() or ch in "."))
-#    sp_mode = input ("Enter 1 to salt and pepper bytes, or 2 to salt and pepper bits (default): ")
-#    if sp_mode == "1":
-#        saltPepperNoise(in_filename, out_filename, rate)
-#    else:
-        # percent should be a float for cvSaltPepper
-#        rate = rate / 100.0
-#        cvSaltPepper(in_filename, out_filename, rate)
-#else:
-#    gp_mode = input("Enter 1 to add Gaussian noise, or 2 to add Gaussian blur (default): ")
-#    if gp_mode == "1":
-#        cvGaussNoise(in_filename, out_filename)
-#    else:
-#        cvGaussBlur(in_filename, out_filename)

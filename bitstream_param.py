@@ -26,5 +26,5 @@ def extractH264streamParams(in_filename, output_path):
     #os.system("ffprobe -show_streams -i {0} -of csv=p=0 > {1}".format(in_filename, output_filename))     # for csv results
     os.system("ffprobe -show_streams -i {0} -of default=nw=1 > {1}".format(in_filename, output_filename)) # for human readable results
 
-#encodeH264stream('./inputVideos/Football-2.mp4', './bitstream/')
+encodeH264stream('./inputVideos/Football-2.mp4', './bitstream/')
 extractH264streamParams('./bitstream/Football-2.264', './bitstream/')
