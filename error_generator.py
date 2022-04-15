@@ -59,7 +59,7 @@ def packetRateParse(in_filename, out_filename, rate, packet_size):
                 packets_dropped += 1
             else:
                 out_file.write(byte)
-        print("Packets dropped: ", packets_dropped)
+        print(f"Packets dropped: {packets_dropped}")
 
 def packetCountParse(in_filename, out_filename, error_count, packet_size):
     # Parse packet_size bytes in in_filename at a time. randomly set packets low
@@ -80,7 +80,7 @@ def packetCountParse(in_filename, out_filename, error_count, packet_size):
             # make sure packet_count > 0 to avoid div by 0 when parsing the final (and possibly partial) packet
             if packet_count > 0 and (random.random() <= (error_count / packet_count)):
                 out_file.write(packet_size * b"\x00")
-                print("packets left: ", packet_count - 1)
+                print(f"packets left: {packet_count - 1}")
                 error_count -= 1
             else:
                 out_file.write(byte)
@@ -108,7 +108,7 @@ def saltPepperNoise(in_filename, out_filename, rate):
                     out_file.write(b"\xFF")
             else:
                 out_file.write(byte)
-        print("bytes flipped: ",flip_count)
+        print(f"bytes flipped: {flip_count}")
 
 def cvGaussBlur(in_filename, out_filename):
     # openCV blurring taken from: https://debuggercafe.com/image-and-video-blurring-using-opencv-and-python/
@@ -223,8 +223,8 @@ def ffmpegBlockiness(in_filename, out_filename, blockiness):
     out_fname, ext = os.path.splitext(out_filename) # split filename from extension
     
     #  apply filter using ffmpeg command line
-    os.system("ffmpeg -i {0} -c:v mpeg2video -q:v {1} -c:a copy {2}.ts".format(in_filename, blockiness, out_fname))
-    os.system("ffmpeg -i {0}.ts -c:v libx264 {1}".format(out_fname, out_filename))
+    os.system(f"ffmpeg -i {in_filename} -c:v mpeg2video -q:v {blockiness} -c:a copy {out_fname}.ts")
+    os.system(f"ffmpeg -i {out_fname}.ts -c:v libx264 {out_filename}")
 
 def colorNoise(in_filename, out_filename):
     # openCV gaussian noise taken from: https://theailearner.com/tag/cv2-randn/
@@ -272,12 +272,12 @@ def ffmpegLoop(input_path, output_path):
     for filename in os.listdir(input_path):
         fname, ext = os.path.splitext(filename) # split filename from extension
 
-        print(filename, " encoding")
+        print(f"{filename} encoding")
 
         ffinput = input_path + fname + ext
         ffoutput = output_path + fname + "-" + ts + ".mp4"
         #   encode each input video using ffmpeg command line
-        os.system("ffmpeg -i {0} -b:v 1000k {1} -report".format(ffinput, ffoutput))
+        os.system(f"ffmpeg -i {ffinput} -b:v 1000k {ffoutput} -report")
 
 def extraErrorLoop(input_path, output_path, error_rate):
     # parse all videos within a folder and add a random distortion
@@ -298,7 +298,7 @@ def extraErrorLoop(input_path, output_path, error_rate):
     #  get a pseudorandom seed, output seed so we can reproduce for testing,
     #  and then set the seed
     seed = random.random()
-    print("Seed: ",seed,"\n")
+    print(f"Seed: {seed}")
     random.seed(seed)  
 
     step = error_rate / 7    
@@ -308,7 +308,7 @@ def extraErrorLoop(input_path, output_path, error_rate):
         in_filename = input_path + filename
         out_file_prefix = output_path + fname
 
-        print(filename, " error")
+        print(f"{filename} error")
 
         mode = random.random()
 
@@ -355,61 +355,6 @@ def extraErrorLoop(input_path, output_path, error_rate):
 
             copyfile(in_filename, out_filename)
 
-def extractFrames(in_filepath, in_filename, output_dir, sample_rate):
-    # uses openCV to extract distorted frames from a video and save them separately
-    # in_filepath -  path to input video
-    # in_filename -  name of input video (without extension or path)
-    # output_dir  -  path to folder that will contain output frames
-    # sample_rate -  number of frames per second to sample
-
-    #create video capture object for the input video
-    cap = cv2.VideoCapture(in_filepath)
-    if not cap.isOpened():
-        print("Couldn't open video.")
-        return
-    
-    video_fps = cap.get(cv2.CAP_PROP_FPS)  # get fps of video
-    print("video_fps 1, ", video_fps)
-    print("samplerate 1, ", sample_rate)
-    sample_rate = min(video_fps, sample_rate)   # cap sample_rate if it is higher than video fps
-    print("samplerate 2, ", sample_rate)
-    step = video_fps / sample_rate  # determine minimum space between each saved frame
-
-    frame_count = 0
-    while (cap.isOpened()):
-        # get each frame of video
-        ret, frame = cap.read()
-        if ret:
-            # if this is the next frame after 'step' frames have passed, save it
-            if ( frame_count % step ) < 1:
-                print('imwrite(...): ', output_dir + "/" + in_filename + "-f{0}".format(frame_count) + ".jpg")
-                cv2.imwrite(output_dir + "/" + in_filename + "-f{0}".format(frame_count) + ".jpg", frame) 
-            frame_count += 1            
-        else:
-            #no frames left so leave loop
-            break
-    cap.release()
-    
-def extractFrameLoop(input_path, output_path, sample_rate):
-    # parse all videos within a folder and sample some frames
-    # input_path  -  path to folder containing input videos
-    # output_path -  path to folder that will contain subfolder containing output frames
-    # sample_rate -  number of frames per second to sample
-
-    for filename in os.listdir(input_path):
-        fname, ext = os.path.splitext(filename) # split filename from extension
-        in_filepath = input_path + filename
-        output_dir = output_path + fname + "-frames" 
-
-        # make folder inside output_path with video file's name to hold extracted frames
-        if not os.path.isdir(output_dir):
-            os.mkdir(output_dir)
-
-        print(filename, " extract frames")
-
-        extractFrames(in_filepath, fname, output_dir, sample_rate)
-
-ffmpegLoop('./inputVideos/', './encodedVideos/')
-extraErrorLoop('./encodedVideos/', './distortedVideos/', 1)
+#ffmpegLoop('./inputVideos/', './encodedVideos/')
+#extraErrorLoop('./encodedVideos/', './distortedVideos/', 1)
 #extraErrorLoop('./distortedVideos/', './doubledistortedVideos/', 0.5)
-extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
