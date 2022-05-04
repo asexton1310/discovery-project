@@ -2,6 +2,29 @@ import time
 import os.path
 import cv2 #opencv
 import numpy as np
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
+import logging
+
+class NewFrameEventHandler(PatternMatchingEventHandler):
+    def on_any_event(self, event):
+        #for testing purposes, log every event
+        logging.info(event)
+    
+    def on_created(self, event):
+        print(f"File created: {event.src_path}")
+        prefix, num_ext = event.src_path.split("-")
+        sample_num, ext = os.path.splitext(num_ext)
+        target_num = int(sample_num) - 1
+
+        if target_num < 1:
+            print(f"No target, fnum too low")
+            return
+
+        target_file = f"{prefix}-{target_num}{ext}"
+        print(f"Target File: {target_file}")
+        #process target file before deleting it, but make sure to delete it when done
+        os.remove(target_file)
 
 def saveFrames(frames, step, filename, output_dir):
     #uses openCV for saving frames as png files
@@ -129,10 +152,56 @@ def extractFrameWebcam(output_dir, sample_rate):
         frame_pos += 1 
     cap.release()
 
+def sampleStream(stream_address, sample_rate, output_path):
+    # use ffmpeg commandline to sample frames from a live h264 stream within a folder
+    # frames will be stored as PNGs for later steps in processing chain to read
+    # Note that a much better implementation would be to sample a stream and save frames
+    #   based on ffmpeg's "decode_video.c" example since it would be more efficient and 
+    #   allow us to directly start the quality analysis when frames are extracted instead
+    #   of polling for finished PNGs.   This would take a too much time at the moment, so
+    #   rewrite this later if we need to.
+    # stream_address - input udp address of the h264 stream
+    # sample_rate    - specified fps to sample the stream at
+    # output_path    - path to folder that will contain output pngs
+
+    if output_path[-1:] != "/":
+        output_path = output_path + "/"
+    # %04d forces filename to be a number with 4 decimal places, padded with 0s. This will likely be unnecessary
+    # if we access files directly when polling the folder since sorting the pngs would not be needed.
+    os.system(f"ffmpeg -c:v h264 -i {stream_address} -vf fps={sample_rate} {output_path}sample-%d.png")
+
+def getLiveFrames(path):
+    # Function that repeatedly polls a directory looking for
+    # new pngs (samples from livestream) and uses an observer to
+    # process them when they are created, and delete them when the 
+    # next sampled frame is available.  Modified from quickstart example in
+    # Python watchdog library documentation
+    # path - folder to watch for new pngs
+
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    event_handler = NewFrameEventHandler(patterns=['*.png'],
+                                         ignore_directories=True)
+    # Create, configure, and start the observer                                     
+    observer = Observer()
+    observer.schedule(event_handler, path)
+    observer.start()
+    # while loop so the user is able to interrupt execution
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
 if __name__ == "__main__":
     #extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
     #extractFrameLoop('./temp/','./live-frames/', 2)
-    frames, step = extractFrames(0,2)
-    ts = str(int(time.time())) # timestamp for unique filenames
+    #frames, step = extractFrames("./inputVideos/A026.mp4",2)
+    #frames, step = extractFrames("./bitstream/Football-2.264",2)
+    # frames, step = extractFrames("./save_video.mp4",2)
+    # ts = str(int(time.time())) # timestamp for unique filenames
 
-    saveFrames(frames, step, ts, "./temp/")
+    # saveFrames(frames, step, ts, "./distortedFrames/")
+    getLiveFrames("./temp/")

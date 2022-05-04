@@ -15,9 +15,9 @@ def avgBrisque(input_frames):
         score = brisq.get_score(frame)
         #print(score)
         brisqueList.append(score)
-    print("avg: ", statistics.fmean(brisqueList))
-    print("var: ", statistics.variance(brisqueList))
-    print("median: ",statistics.median(brisqueList))
+    print("BRISQUE avg: ", statistics.fmean(brisqueList))
+    print("BRISQUE var: ", statistics.variance(brisqueList))
+    print("BRISQUE median: ",statistics.median(brisqueList))
 
 def avgBrisqueLoop(input_path):
     # input_path  -  path to folder containing subfolders for each video 
@@ -136,6 +136,6 @@ def getFlickRatio(msds, prev_msds, thresh):
 
 frames, _ = frameExtraction.extractFrames("./inputVideos/A026.mp4", 2)
 print(frames)
-avgBrisque(frames)
 temporalFlickering(frames)
+avgBrisque(frames)
 
