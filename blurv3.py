@@ -20,15 +20,15 @@ def sobel_blur(path):
 
 
 cap = cv2.VideoCapture('input.mp4')  # insert video here
-count = 0
+count = 0 # frame no.
 f = open("blur_algorithm_output.txt", "x")
 while cap.isOpened():
     ret, frame = cap.read()
-    if ret == 0:
+    if ret == 0: # if video is complete, break out of loop
         break
-    print(f"count = {count}")
+    print(f"count = {count}") # frame no.
     # print(f"ret: {ret}  frame: {count+1}   Score: {sobelv2(frame)}")
-    # cv2.imwrite(f"video frame {count+1}.jpg", frame)   (save image to file system)
+    # cv2.imwrite(f"video frame {count+1}.jpg", frame)  # save image to file system
     f.write(f"Frame: {count+1}, Score: {sobel_blur(frame)}\n")
     count = count + 1
 
