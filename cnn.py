@@ -28,7 +28,7 @@ print(input_shape,"\n")
 # set up the model with 2 layers, 1 hidden sigmoid with 10 neurons, one linear output layer
 model = tf.keras.Sequential()
 model.add(tf.keras.Input(shape=input_shape))
-model.add(tf.keras.layers.Dense(10, activation='sigmoid'))
+model.add(tf.keras.layers.Dense(input_shape[0], activation='sigmoid'))
 model.add(tf.keras.layers.Dense(1, activation='linear'))
 print(model.summary(), "\n")
 
@@ -53,4 +53,7 @@ print(y_test.iloc[0:3])
 # history stores the loss/val for each epoch
 loss_df = pd.DataFrame(losses.history)
 loss_df.loc[:,['loss','val_loss']].plot()
+plt.title("Training Results") 
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
 plt.show()
