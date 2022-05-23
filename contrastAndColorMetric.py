@@ -2,12 +2,12 @@ from skimage import filters
 from skimage.feature import local_binary_pattern
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn import preprocessing
 import cv2
 
 #This function calculate contrast distortion effectively 
 #on gray-scale denoted as GD
 def calculateGD(frameInput):
-	mapg=[]
 	arrayOfGD=[]
 	# settings for LBP
 	radius = 3
@@ -30,7 +30,8 @@ def calculateGD(frameInput):
 				GLBP = gradientMap[m][n] * deltaFunction
 				sumOfGLBP = sumOfGLBP + GLBP
 		arrayOfGD.append(sumOfGLBP)
-	return arrayOfGD
+	normalized_arrayOfGD= preprocessing.normalize([arrayOfGD]).flatten()
+	return normalized_arrayOfGD
 	#x_axis= range(len(arrayOfGD))
 	#plt.bar(x_axis, arrayOfGD, color ='blue', width = 0.4)
 	#plt.grid(True)
@@ -59,7 +60,8 @@ def calculateCS(frameInput):
 		CS.append(skewOfHSV[i])
 		CS.append(KurtosisOfHSV[i])
 
-	return CS
+	normalized_arrayOfCS = preprocessing.normalize([CS]).flatten()
+	return normalized_arrayOfCS
 	#x_axis= range(len(CS))
 	#plt.bar(x_axis, CS, color ='blue', width = 0.4)
 	#plt.grid(True)
