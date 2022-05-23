@@ -44,11 +44,11 @@ def block(img):
                     col = 0
                 else:
                     break  # the image has been fully cropped
-    if count < 550 and count > 200:
-        count = count - 200
-    elif count > 550:
-        count = count - 150
-    score = 1-(count / 900)
+    if count > 300:
+        count = count - 300
+    score = 1 - (count / 800)
+    if score > 1:
+        score = 1
     if score < 0:
         score = 0
     return score
