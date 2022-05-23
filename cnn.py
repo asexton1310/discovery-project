@@ -1,6 +1,8 @@
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import scipy.stats as sp
+import custom_tf_metrics as custom_metrics
 
 df = pd.read_csv('live-nrqe.csv')
 
@@ -35,7 +37,7 @@ print(model.summary(), "\n")
 # compile model specifying optimizer and evaluation metrics
 model.compile(optimizer='adam', 
               loss='mae',
-              metrics=['mae']) 
+              metrics=['mae', custom_metrics.PearsonCorrelation(), custom_metrics.SpearmanCorrelation()]) 
 
 # model is created now, next is training it
 losses = model.fit(X_train, y_train,
