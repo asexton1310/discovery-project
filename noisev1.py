@@ -20,17 +20,18 @@ def noise(path):
         score = 0
     return score
 
+if __name__ == "__main__":
+    
+    cap = cv2.VideoCapture('input.mp4')  # insert video here
+    count = 0
+    f = open("noise_algorithm_output.txt", "x")
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if ret == 0:
+            break
+        # (save image to file system)
+        # cv2.imwrite(f"video frame {count+1}.jpg", frame)
+        f.write(f"Frame: {count+1}, Score: {noise(frame)}\n")
+        count = count + 1
 
-cap = cv2.VideoCapture('input.mp4')  # insert video here
-count = 0
-f = open("noise_algorithm_output.txt", "x")
-while cap.isOpened():
-    ret, frame = cap.read()
-    if ret == 0:
-        break
-    # (save image to file system)
-    # cv2.imwrite(f"video frame {count+1}.jpg", frame)
-    f.write(f"Frame: {count+1}, Score: {noise(frame)}\n")
-    count = count + 1
-
-cap.release()
+    cap.release()

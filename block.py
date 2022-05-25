@@ -54,8 +54,9 @@ def block(img):
     return score
 
 
-originalIm = cv2.imread("originalimage.jpg")
-blockyIm = cv2.imread("compressedimage.jpg")
+if __name__ == "__main__":
+    originalIm = cv2.imread("originalimage.jpg")
+    blockyIm = cv2.imread("compressedimage.jpg")
 
-print(f"originalimage.jpg: {block(originalIm)}")
-print(f"compressedimage.jpg: {block(blockyIm)}")
+    print(f"originalimage.jpg: {block(originalIm)}")
+    print(f"compressedimage.jpg: {block(blockyIm)}")

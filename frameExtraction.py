@@ -40,7 +40,7 @@ def saveFrames(frames, step, filename, output_dir):
         #get the position of the frame we're saving
         frame_pos = i * step
         #save the frame
-        print(f"imwrite(...): {output_dir}/{filename}-f{frame_pos:0{digits}}.png")
+       # print(f"imwrite(...): {output_dir}/{filename}-f{frame_pos:0{digits}}.png")
         cv2.imwrite(f"{output_dir}/{filename}-f{frame_pos:0{digits}}.png", frame)
 
 def extractFrameLoop(input_path, output_path, sample_rate):

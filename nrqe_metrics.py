@@ -78,12 +78,14 @@ def temporalFlickering(frame_array):
             height = len(luma[0])
             msds = [[0 for k in range(0, height, BLOCK_SIDE)] for j in range(0, width, BLOCK_SIDE)]
         frameMSDs.append(msds)
-        flickRatios.append(flickerRatio * 100) #multiply by 100 to do display as a percentage
+        flickRatios.append(flickerRatio)
         flickSum += flickerRatio
-        print(f"Frame: {frame}  %Flicker: {flickerRatio * 100}")
+        #print(f"Frame: {frame}  %Flicker: {flickerRatio}")
         i += 1
-    print(flickRatios)
-    print(f"Avg %Flicker: {(flickSum * 100) / (i+1)}")
+    #print(flickRatios)
+    avg_flicker = (flickSum) / (i+1)
+    #print(f"Avg %Flicker: {avg_flicker}")
+    return avg_flicker
 
 def getMSDs(current, previous, block_side):
     # current    - 2d array of luma values for the frame
@@ -103,8 +105,13 @@ def getMSDs(current, previous, block_side):
             for x in range(0, block_side):
                 #within the block
                 for y in range(0, block_side):
-                    sd = (int(current[i+x][j+y][0]) - int(previous[i+x][j+y][0])) ** 2 #square difference
-                    sumSD += sd
+                    try:
+                        sd = (int(current[i+x][j+y][0]) - int(previous[i+x][j+y][0])) ** 2 #square difference
+                        sumSD += sd
+                    except IndexError:
+                        # if resolution is not multiple of block size, let the error happen and just break
+                        # saves some time checking if index is out of range
+                        break
             msd = sumSD / (block_side ** 2) #mean square difference
             colMSDs.append(msd)
         blockMSDs.append(colMSDs)
@@ -134,8 +141,10 @@ def getFlickRatio(msds, prev_msds, thresh):
             possibleCount += 1  
     return flickerCount / possibleCount
 
-frames, _ = frameExtraction.extractFrames("./inputVideos/A026.mp4", 2)
-print(frames)
-temporalFlickering(frames)
-avgBrisque(frames)
+if __name__ == "__main__":
+
+    frames, _ = frameExtraction.extractFrames("./inputVideos/A026.mp4", 2)
+    print(frames)
+    temporalFlickering(frames)
+    avgBrisque(frames)
 
