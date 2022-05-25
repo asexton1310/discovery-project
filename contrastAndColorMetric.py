@@ -8,7 +8,7 @@ import cv2
 #This function calculate contrast distortion effectively 
 #on gray-scale denoted as GD
 def calculateGD(frameInput):
-	scalePercent = 10
+	scalePercent = 5
 	arrayOfGD=[]
 	# settings for LBP
 	radius = 3
