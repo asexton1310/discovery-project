@@ -8,15 +8,19 @@ import cv2
 #This function calculate contrast distortion effectively 
 #on gray-scale denoted as GD
 def calculateGD(frameInput):
+	scalePercent = 10
 	arrayOfGD=[]
 	# settings for LBP
 	radius = 3
 	n_points = 8 * radius
 	image = cv2.imread(frameInput, cv2.IMREAD_GRAYSCALE)
+	height = int(image.shape[0] *(scalePercent/100))
+	width =int(image.shape[1] *(scalePercent/100))
+	imageResize = cv2.resize(image, (width, height))
 	#calculate gradient map
-	gradientMap = filters.sobel(image)
+	gradientMap = filters.sobel(imageResize)
 	#calculate local binary patten
-	lbp = local_binary_pattern(image,n_points, radius)
+	lbp = local_binary_pattern(imageResize,n_points, radius)
 	
 	for i in range(0,9):
 		sumOfGLBP=0
@@ -32,14 +36,15 @@ def calculateGD(frameInput):
 		arrayOfGD.append(sumOfGLBP)
 	normalized_arrayOfGD= preprocessing.normalize([arrayOfGD]).flatten()
 	return normalized_arrayOfGD
-	#x_axis= range(len(arrayOfGD))
-	#plt.bar(x_axis, arrayOfGD, color ='blue', width = 0.4)
+	#x_axis= range(len(normalized_arrayOfGD))
+	#plt.bar(x_axis, normalized_arrayOfGD, color ='blue', width = 0.4)
 	#plt.grid(True)
 	#plt.show()
 
 #This function calculate features on HSV color space 
 #denoted as CS
 def calculateCS(frameInput):
+
 	#initialize list of CS - features on HSV color space 
 	CS=[]
 
@@ -47,11 +52,10 @@ def calculateCS(frameInput):
 	img = cv2.imread(frameInput)
 	img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 	img = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-
 	#calculate 4 features of color moment
 	meanOfHSV = np.mean(img, axis=(0,1))
 	varianceOfHSV =(np.mean((img - meanOfHSV)**2,axis=(0,1)))**(1/2)
-	skewOfHSV = np.cbrt(np.mean((img - meanOfHSV)**3,axis=(0,1)))
+	skewOfHSV = np.cbrt(np.mean((img- meanOfHSV)**3,axis=(0,1)))
 	KurtosisOfHSV = (np.mean((img - meanOfHSV)**4,axis=(0,1)))**(1/4)
 
 	for i in range(1,3):
@@ -60,17 +64,20 @@ def calculateCS(frameInput):
 		CS.append(skewOfHSV[i])
 		CS.append(KurtosisOfHSV[i])
 
-	normalized_arrayOfCS = preprocessing.normalize([CS]).flatten()
+	normalized_arrayOfCS= preprocessing.normalize([CS]).flatten()
 	return normalized_arrayOfCS
-	#x_axis= range(len(CS))
-	#plt.bar(x_axis, CS, color ='blue', width = 0.4)
+	#x_axis= range(len(normalized_arrayOfCS))
+	#plt.bar(x_axis, normalized_arrayOfCS, color ='blue', width = 0.4)
 	#plt.grid(True)
 	#plt.show()
 
 if __name__=="__main__":
-	imageTest="test.jpg"
-	print(calculateCS(imageTest))
-
+	imageTest="2.png"
+	imageTest2='3.png'
+	print(calculateGD(imageTest))
+	#print(calculateGD(imageTest2))
+	#print(calculateCS(imageTest))
+	#print(calculateCS(imageTest2))
 
 
 
