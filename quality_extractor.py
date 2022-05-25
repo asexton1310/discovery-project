@@ -42,38 +42,20 @@ def frameQualityLoop(framesfolder_path, vidname):
         cv_frame = cv2.imread(full_path)
         # some metrics require an array of frame data. So build it
         frame_data.append(cv_frame)
-    
-        time_metric1 = time.perf_counter()
-        blockiness_list.append( Blockiness.block(cv_frame) )
-        time_metric2 = time.perf_counter()
-        print("Blockiness: ", time_metric2 - time_metric1)
-
-        blurriness_list.append( Blurriness.sobel_blur(cv_frame) )
-        time_metric3 = time.perf_counter()
-        print("Blurriness: ", time_metric3 - time_metric2)
         
+        blockiness_list.append( Blockiness.block(cv_frame) )
+        blurriness_list.append( Blurriness.sobel_blur(cv_frame) )     
         # calculateCS returns a list with 8 values
         color_metrics = CCMetric.calculateCS(full_path)
         for i in range( len(color_metrics) ):
             color_list[i].append(color_metrics[i])
-        time_metric4 = time.perf_counter()
-        print("Color: ", time_metric4 - time_metric3)
-
         noise_list.append( Noise.noise(cv_frame) )
-        time_metric5 = time.perf_counter()
-        print("Noise: ", time_metric5 - time_metric4)
-
         # BRISQUE output is 0-100
         brisque_list.append( brisq.get_score(cv_frame) / 100 )
-        time_metric6 = time.perf_counter()
-        print("BRISQUE: ", time_metric6 - time_metric5)
-
        # calculateGD returns a list with 9 values
         contrast_metrics = CCMetric.calculateGD(full_path)
         for i in range( len(contrast_metrics) ):
             contrast_list[i].append( contrast_metrics[i] )
-        time_metric7 = time.perf_counter()
-        print("Contrast: ", time_metric7 - time_metric6)
     
     csv_out = []
     csv_out.append( vidname )
@@ -131,8 +113,5 @@ sample_rate = 1000 #samples at video's fps if samplerate above fps
 print("done extracting. program should STOP")
 
 for frame_folder in os.listdir(output_path):
-    if frame_folder != "A052-frames":
-        break
-        continue
     prefix, _ = frame_folder.split('-')
     frameQualityLoop(output_path + frame_folder + "/", prefix + ".mp4")
