@@ -1,4 +1,3 @@
-from tracemalloc import start
 import block as Blockiness
 import blurv3 as Blurriness
 import contrastAndColorMetric as CCMetric
@@ -12,9 +11,15 @@ import numpy as np
 import time
 import csv
 
+def addFrameStats(input_list, out_list):
+    out_list.append( np.average(input_list) )
+    out_list.append( np.max(input_list) )
+    out_list.append( np.min(input_list) )
+
 def frameQualityLoop(framesfolder_path, vidname):
     brisq = brisque.BRISQUE()
 
+    # lists of each frame's metrics
     blockiness_list = []
     blurriness_list = []
     color_list      = [ [], [], [], [], [], [], [], []]
@@ -22,6 +27,7 @@ def frameQualityLoop(framesfolder_path, vidname):
     noise_list      = []
     brisque_list    = []
 
+    # list of each frame's pixel values
     frame_data = []
 
     frame_list = os.listdir(framesfolder_path)
@@ -30,12 +36,12 @@ def frameQualityLoop(framesfolder_path, vidname):
     start_time = time.perf_counter()
     j = 1
     for frame in frame_list:
-    #    time_elapsed = time.perf_counter() - start_time
-    #    if (time_elapsed) > (60 * j):
-    #        print("frame: ", frame)
-    #        print("time_elapsed: ", time_elapsed)
-    #        j += 1
-       # start_frame = time.perf_counter()
+        time_elapsed = time.perf_counter() - start_time
+        if (time_elapsed) > (60 * j):
+            print("frame: ", frame)
+            print("time_elapsed: ", time_elapsed)
+            j += 1
+        #start_frame = time.perf_counter()
         full_path = framesfolder_path + frame
 
         # some metrics require frame to already be read with opencv
@@ -50,59 +56,47 @@ def frameQualityLoop(framesfolder_path, vidname):
         for i in range( len(color_metrics) ):
             color_list[i].append(color_metrics[i])
         noise_list.append( Noise.noise(cv_frame) )
-        # BRISQUE output is 0-100
+        # BRISQUE output is 0-100. Easy to normalize now
         brisque_list.append( brisq.get_score(cv_frame) / 100 )
-       # calculateGD returns a list with 9 values
-        contrast_metrics = CCMetric.calculateGD(full_path)
-        for i in range( len(contrast_metrics) ):
-            contrast_list[i].append( contrast_metrics[i] )
+        # calculateGD returns a list with 9 values
+        #contrast_metrics = CCMetric.calculateGD(full_path)
+        #for i in range( len(contrast_metrics) ):
+        #    contrast_list[i].append( contrast_metrics[i] )
     
+    # VIDEO NAME
     csv_out = []
     csv_out.append( vidname )
 
     # BLOCKINESS
-    csv_out.append( np.average(blockiness_list) )
-    csv_out.append( np.max(blockiness_list) )
-    csv_out.append( np.min(blockiness_list) )
+    addFrameStats(blockiness_list, csv_out)
 
     # BLURRINESS
-    csv_out.append( np.average(blurriness_list) )
-    csv_out.append( np.max(blurriness_list) )
-    csv_out.append( np.min(blurriness_list) )
+    addFrameStats(blurriness_list, csv_out)
 
     # COLOR
     for i in range( len(color_list) ):
-        csv_out.append( np.average(color_list[i]) )
-        csv_out.append( np.max(color_list[i]) )
-        csv_out.append( np.min(color_list[i]) )
+        addFrameStats(color_list[i], csv_out)
 
     # NOISE
-    csv_out.append( np.average(noise_list) )
-    csv_out.append( np.max(noise_list) )
-    csv_out.append( np.min(noise_list) )
+    addFrameStats(noise_list, csv_out)
 
     # BRISQUE
-    csv_out.append( np.average(brisque_list) )
-    csv_out.append( np.max(brisque_list) )
-    csv_out.append( np.min(brisque_list) )
+    addFrameStats(brisque_list, csv_out)
 
+    # FLICKERING
     np_frame_array = np.array(frame_data)
     csv_out.append( NRQEmetrics.temporalFlickering(np_frame_array) )
 
-   # CONTRAST
-   # for i in range( len(contrast_list) ):
-   #     csv_out.append( np.average(contrast_list[i]) )
-   #     csv_out.append( np.max(contrast_list[i]) )
-   #     csv_out.append( np.min(contrast_list[i]) )
+    # CONTRAST
+    # for i in range( len(contrast_list) ):
+    #    addFrameStats(contrast_list[i], csv_out)
 
+    # WRITE TO CSV
     with open('live-nrqe.csv', 'a', newline='') as csvfile:
         metric_writer = csv.writer(csvfile, delimiter=',')
         metric_writer.writerow( csv_out )
 
     print( "Time Elapsed: ", time.perf_counter() - start_time )
-
-testvid = "A001.mp4"
-fname, ext = os.path.splitext(testvid) # split filename from extension
 
 input_path = "./live-test/"
 output_path = "./live-frames/"
@@ -110,7 +104,7 @@ sample_rate = 1000 #samples at video's fps if samplerate above fps
 
 #frameExtraction.extractFrameLoop(input_path, output_path, sample_rate)
 
-print("done extracting. program should STOP")
+print("done extracting frames")
 
 for frame_folder in os.listdir(output_path):
     prefix, _ = frame_folder.split('-')
