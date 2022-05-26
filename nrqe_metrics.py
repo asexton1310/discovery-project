@@ -57,9 +57,7 @@ def temporalFlickering(frame_array):
     #  or when it switches back to static from updating, according to the paper)
     THRESH = 300
     BLOCK_SIDE = 3
-    frames = []
-    frameMSDs = []
-    flickRatios = []
+    #flickRatios = []
     flickSum = 0
     i = 0
     # big problem with the following for loop is it processes the 
@@ -67,18 +65,19 @@ def temporalFlickering(frame_array):
     for frame in frame_array:
         luma = np.array(frame, copy=True)
         cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb, luma) #convert color format
-        frames.append(luma)
 
         flickerRatio = 0
         if i != 0:
-            msds = getMSDs(luma, frames[i-1], BLOCK_SIDE) #2d array of MSDs for each block in the frame
-            flickerRatio = getFlickRatio(msds, frameMSDs[i -1], THRESH)
+            msds = getMSDs(luma, prev_frame, BLOCK_SIDE) #2d array of MSDs for each block in the frame
+            flickerRatio = getFlickRatio(msds, prev_msds, THRESH)
         else:
             width = len(luma)
             height = len(luma[0])
             msds = [[0 for k in range(0, height, BLOCK_SIDE)] for j in range(0, width, BLOCK_SIDE)]
-        frameMSDs.append(msds)
-        flickRatios.append(flickerRatio)
+        
+        prev_frame = luma
+        prev_msds = msds
+        #flickRatios.append(flickerRatio)
         flickSum += flickerRatio
         #print(f"Frame: {frame}  %Flicker: {flickerRatio}")
         i += 1
@@ -86,6 +85,38 @@ def temporalFlickering(frame_array):
     avg_flicker = (flickSum) / (i+1)
     #print(f"Avg %Flicker: {avg_flicker}")
     return avg_flicker
+
+def flickRatio(current, previous=np.array(0) , prev_msds=[]):
+    # flick ratio for single frame
+    # current   -  current frame represented as numpy array of BGR values
+    # previous  -  previous frame represented in YUV space. Easily obtained 
+    #              as second returned value from call to this function
+    # prev_msds -  previous list of mean square difference corresponding to
+    #              the frame in previous. Easily obtained as third return value
+    #              from call to this function
+    # Returns
+    # flickerRatio  -  the ratio of flickering blocks to non-flickering blocks
+    #                  a framewise metric from 0-1
+    # luma          -  the input frame converted to YUV space. mainly necessary for
+    #                  computing msds in future calls to this function
+    # msds          -  The input frame's mean square differences. mainly necessary for
+    #                  computing flickerRatio in future calls to this function
+    THRESH = 300
+    BLOCK_SIDE = 3
+    
+    luma = np.array(current, copy=True)
+    cv2.cvtColor(current, cv2.COLOR_BGR2YCrCb, luma) #convert color format
+
+    flickerRatio = 0
+    if previous.any():
+        msds = getMSDs(luma, previous, BLOCK_SIDE) #2d array of MSDs for each block in the frame
+        flickerRatio = getFlickRatio(msds, prev_msds, THRESH)
+    else:
+        width = len(luma)
+        height = len(luma[0])
+        msds = [[0 for k in range(0, height, BLOCK_SIDE)] for j in range(0, width, BLOCK_SIDE)]
+    
+    return flickerRatio, luma, msds
 
 def getMSDs(current, previous, block_side):
     # current    - 2d array of luma values for the frame
