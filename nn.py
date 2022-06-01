@@ -3,6 +3,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import scipy.stats as sp
 import custom_tf_metrics as custom_metrics
+import os
 
 df = pd.read_csv('live-nrqe.csv')
 
@@ -17,9 +18,9 @@ print( train_df.head() )
 #normalize data into range of (0,1)
 max_val = train_df.max(axis= 0)
 min_val = train_df.min(axis= 0)
-range = max_val - min_val
-train_df = (train_df - min_val)/(range)
-test_df =  (test_df - min_val)/range
+data_range = max_val - min_val
+train_df = (train_df - min_val)/(data_range)
+test_df =  (test_df - min_val)/data_range
 
 # separate data into inputs and targets
 X_train = train_df.drop('mos',axis=1)
@@ -58,6 +59,11 @@ print("Predictions: ")
 print(model.predict(X_test.iloc[0:3, :]))
 print("Truth: ")
 print(y_test.iloc[0:3])
+
+# Save the entire model as a SavedModel.
+if not os.path.isdir("./savedModels/feedfw-nn-1/"):
+    os.makedirs("./savedModels/feedfw-nn-1/")
+model.save("./savedModels/feedfw-nn-1/")
 
 # visualization of training vs validation loss
 # history stores the loss/val for each epoch
