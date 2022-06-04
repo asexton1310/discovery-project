@@ -26,7 +26,7 @@ test_df =  (test_df - min_val)/data_range
 X_train = train_df.drop('mos',axis=1)
 X_test = test_df.drop('mos',axis=1)
 y_train = train_df['mos']
-y_test = test_df['mos']
+y_test= test_df['mos']
 
 print( X_train.head() )
 
@@ -61,9 +61,10 @@ print("Truth: ")
 print(y_test.iloc[0:3])
 
 # Save the entire model as a SavedModel.
-if not os.path.isdir("./savedModels/feedfw-nn-1/"):
-    os.makedirs("./savedModels/feedfw-nn-1/")
-model.save("./savedModels/feedfw-nn-1/")
+savefile = "./savedModels/feedfw-nn-1/"
+if not os.path.isdir(savefile):
+    os.makedirs(savefile)
+model.save(savefile)
 
 # visualization of training vs validation loss
 # history stores the loss/val for each epoch
