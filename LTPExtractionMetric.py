@@ -1,3 +1,7 @@
+
+# LTP algorithm based on paper by Pedro Garcia Freitas
+# Accesible at https://ieeexplore.ieee.org/abstract/document/7498959
+
 from skimage import filters
 import numpy as np
 from sklearn.preprocessing import normalize
@@ -56,3 +60,4 @@ if __name__ == "__main__":
     imageTest2 = '014-d.png'
     print("Frame 1: ", getLTPimage(imageTest))
     print("Frame 2: ", getLTPimage(imageTest2))
+
