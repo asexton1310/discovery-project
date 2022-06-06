@@ -53,8 +53,8 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
     # lists of each frame's metrics
     blockiness_list = []
     blurriness_list = []
-    contrast_list = [[], [], [], [], [], [], [], [], []]
-    contrast_prev = [[], [], [], [], [], [], [], [], []]
+#    contrast_list = [[], [], [], [], [], [], [], [], []]
+#    contrast_prev = [[], [], [], [], [], [], [], [], []]
     noise_list = []
     csv1 = []  # This will be the list I am sending to the output of the Pipe
     # list of each frame's pixel values
@@ -73,18 +73,18 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
             blockiness_list.append(Blockiness.block(cv_frame))
             blurriness_list.append(Blurriness.sobel_blur(cv_frame))
             # calculateGD returns a list with 9 values
-            contrast_metrics = CCMetric.calculateGD(full_path)
-            for i in range(len(contrast_metrics)):
-                contrast_list[i].append(contrast_metrics[i])
+        #    contrast_metrics = CCMetric.calculateGD(full_path)
+        #    for i in range(len(contrast_metrics)):
+        #        contrast_list[i].append(contrast_metrics[i])
             noise_list.append(Noise.noise(cv_frame))
             frame_prev = cv_frame
-            contrast_prev = contrast_metrics
+        #    contrast_prev = contrast_metrics
         else:
             frame_data.append(cv_frame)
             blockiness_list.append(blockiness_list[len(blockiness_list)-1])
             blurriness_list.append(blurriness_list[len(blurriness_list)-1])
-            for i in range(len(contrast_prev)):
-                contrast_list[i].append(contrast_prev[i])
+        #    for i in range(len(contrast_prev)):
+        #        contrast_list[i].append(contrast_prev[i])
             noise_list.append(noise_list[len(noise_list)-1])
 
     # VIDEO NAME
@@ -94,8 +94,8 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
     # BLURRINESS
     addFrameStats(blurriness_list, csv1)
     # CONTRAST
-    for i in range(len(contrast_list)):
-        addFrameStats(contrast_list[i], csv1)
+#    for i in range(len(contrast_list)):
+#        addFrameStats(contrast_list[i], csv1)
     # NOISE
     addFrameStats(noise_list, csv1)
     print("Time Elapsed for blur, block, noise, contrast: ",
@@ -147,8 +147,13 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
     frame_list = os.listdir(framesfolder_path)
     frame_list.sort()
     frame_prev = -1
+
+    frame_count = 0
+    flick_sum   = 0
+
     start_time = time.perf_counter()
     for frame in frame_list:
+        frame_count += 1
         # some metrics require frame to already be read with opencv
         full_path = framesfolder_path + frame
         cv_frame = cv2.imread(full_path)
@@ -161,10 +166,21 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
             else:
                 # BRISQUE output is 0-100. Easy to normalize now
                 brisque_list.append(brisq.get_score(cv_frame) / 100)
+            #TEMPORAL FLICKERING
+            if frame_count == 1:
+                # temporal flickering
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame)
+            else:
+                # temporal flickering
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame, prev_temporal, prev_msds)
+            flick_sum += flick_ratio
         else:  # freeze frame occured
             frame_data.append(cv_frame)
             brisque_list.append(brisque_list[len(brisque_list)-1])
+    # BRISQUE
     addFrameStats(brisque_list, csv3)
+    # TEMPORAL FLICKERNG
+    csv3.append(flick_sum / frame_count)
     print("Time Elapsed for BRISQUE: ", time.perf_counter() - start_time)
     csv_out.send(csv3)  # Send list to output of Pipe
 
@@ -181,6 +197,12 @@ if __name__ == "__main__":
                  'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
                  'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
                  'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque']
+    # for testing integration ONLY 
+    int_csv_label = ['video_name', 'avg_blockiness', 'max_blockiness', 'min_blockiness', "avg_blur", "max_blur", "min_blur", 'avg_color1', 'max_color1',
+                 'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
+                 'avg_color5', 'max_color5', 'min_color5', 'avg_color6', 'max_color6', 'min_color6', 'avg_color7', 'max_color7', 'min_color7', 'avg_color8',
+                 'max_color8', 'min_color8',
+                 'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
     path2file = "live-nrqe.csv"
     path = Path(path2file)
     if path.is_file():
@@ -226,18 +248,19 @@ if __name__ == "__main__":
         # Acheive total CSV list with appropriate outputs
         csv_out = csv_out1 + csv_out2 + csv_out3
         # WRITE TO CSV
-        if path.is_file():
-            with open('live-nrqe.csv', 'a', newline='') as csvfile:
-                metric_writer = csv.writer(csvfile, delimiter=',')
-                metric_writer.writerow(csv_out)
-        else:
-            print("Error: live-nrqe.csv does not exist.")
-            break
+    #    if path.is_file():
+    #        with open('live-nrqe.csv', 'a', newline='') as csvfile:
+    #            metric_writer = csv.writer(csvfile, delimiter=',')
+    #            metric_writer.writerow(csv_out)
+    #    else:
+    #        print("Error: live-nrqe.csv does not exist.")
+
         # Write to individual CSV
-        with open(f'quality-metrics/{prefix}-{video_num}.csv', 'a', newline='') as csvfile:
+        csv_prefix = "video"
+        with open(f'quality-metrics/{csv_prefix}-{video_num}.csv', 'a', newline='') as csvfile:
             metric_writer = csv.writer(csvfile, delimiter=',')
             # metric_writer.writerows()
-            metric_writer.writerow(csv_label[1:])
+            metric_writer.writerow(int_csv_label[1:])
             metric_writer.writerow(csv_out[1:])
         video_num += 1
     print("Total Time Elapsed: ", time.perf_counter() - start_time)
