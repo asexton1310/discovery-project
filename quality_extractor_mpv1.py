@@ -121,7 +121,6 @@ def p2LTPMetricLoop(framesfolder_path, vidname, csv_out):
         # Check for freeze frame
         if np.mean(frame_prev) != np.mean(cv_frame):
             ltp_list.append(LTP.getLTPimage(full_path))
-            print(LTP.getLTPimage(full_path))
             frame_prev = cv_frame
         else:  # Freeze frame occured
             frame_data.append(cv_frame)
