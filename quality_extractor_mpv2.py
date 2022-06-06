@@ -11,6 +11,7 @@ import noisev1 as Noise
 import nrqe_metrics as NRQEmetrics
 import frameExtraction
 import os.path
+from pathlib import Path
 import cv2
 import brisque
 import numpy as np
@@ -61,7 +62,7 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
     frame_list = os.listdir(framesfolder_path)
     frame_list.sort()
     frame_prev = -1
-    # start_time = time.perf_counter()
+    start_time = time.perf_counter()
     for frame in frame_list:
         full_path = framesfolder_path + frame
         # some metrics require frame to already be read with opencv
@@ -97,7 +98,8 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
         addFrameStats(contrast_list[i], csv1)
     # NOISE
     addFrameStats(noise_list, csv1)
-    # print("Time Elapsed for blur, block, noise, contrast: ", time.perf_counter() - start_time)
+    print("Time Elapsed for blur, block, noise, contrast: ",
+          time.perf_counter() - start_time)
     csv_out.send(csv1)  # Send list to output of Pipe
 
 
@@ -110,7 +112,7 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
     frame_list.sort()
     frame_prev = -1
     color_prev = [[], [], [], [], [], [], [], []]
-    # start_time = time.perf_counter()
+    start_time = time.perf_counter()
     for frame in frame_list:
         full_path = framesfolder_path + frame
         # some metrics require frame to already be read with opencv
@@ -131,7 +133,7 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
 
     for i in range(len(color_list)):
         addFrameStats(color_list[i], csv2)
-    # print("Time Elapsed for color: ", time.perf_counter() - start_time)
+    print("Time Elapsed for color: ", time.perf_counter() - start_time)
     csv_out.send(csv2)  # Send list to output of Pipe
 
 
@@ -145,7 +147,7 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
     frame_list = os.listdir(framesfolder_path)
     frame_list.sort()
     frame_prev = -1
-    # start_time = time.perf_counter()
+    start_time = time.perf_counter()
     for frame in frame_list:
         # some metrics require frame to already be read with opencv
         full_path = framesfolder_path + frame
@@ -153,7 +155,7 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
         frame_data.append(cv_frame)
         if np.mean(frame_prev) != np.mean(cv_frame):  # check for freeze-frame
             frame_prev = cv_frame
-            # if frame is a solid color, brisque will return error, as exprected.
+            # if frame is a solid color, brisque will return error, as expected
             if np.mean(cv_frame) == 0:
                 brisque_list.append(0)
             else:
@@ -163,7 +165,7 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
             frame_data.append(cv_frame)
             brisque_list.append(brisque_list[len(brisque_list)-1])
     addFrameStats(brisque_list, csv3)
-    # print("Time Elapsed for BRISQUE: ", time.perf_counter() - start_time)
+    print("Time Elapsed for BRISQUE: ", time.perf_counter() - start_time)
     csv_out.send(csv3)  # Send list to output of Pipe
 
 
@@ -179,22 +181,24 @@ if __name__ == "__main__":
                  'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
                  'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
                  'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque']
-
-    with open('live-nrqe.csv', 'a', newline='') as csv_file:
-        metric_writer = csv.writer(csv_file, delimiter=',')
-        metric_writer.writerow(csv_label)
-    frameExtraction.extractFrameLoop(input_path, output_path, sample_rate)
+    path2file = "live-nrqe.csv"
+    path = Path(path2file)
+    if path.is_file():
+        print("File already exists")
+    else:
+        with open('live-nrqe.csv', 'a', newline='') as csv_file:
+            metric_writer = csv.writer(csv_file, delimiter=',')
+            metric_writer.writerow(csv_label)
+    #frameExtraction.extractFrameLoop(input_path, output_path, sample_rate)
     print("Done extracting frames")
     start_time = time.perf_counter()
 
+    video_num = 0
     for frame_folder in os.listdir(output_path):
         prefix, _ = frame_folder.split('-')
-        # p1 Pipe (noise, blur, block, contrast)
-        csv_in1, csv_out1 = mp.Pipe()
-        # p2 Pipe (color)
-        csv_in2, csv_out2 = mp.Pipe()
-        # p3 Pipe (brisque)
-        csv_in3, csv_out3 = mp.Pipe()
+        csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
+        csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
+        csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
         # Process p1 (noise, blur, block, contrast)
         p1 = mp.Process(target=p1MetricsLoop, args=(
             output_path + frame_folder + "/", prefix + ".mp4", csv_in1,))
@@ -222,7 +226,18 @@ if __name__ == "__main__":
         # Acheive total CSV list with appropriate outputs
         csv_out = csv_out1 + csv_out2 + csv_out3
         # WRITE TO CSV
-        with open('live-nrqe.csv', 'a', newline='') as csvfile:
+        if path.is_file():
+            with open('live-nrqe.csv', 'a', newline='') as csvfile:
+                metric_writer = csv.writer(csvfile, delimiter=',')
+                metric_writer.writerow(csv_out)
+        else:
+            print("Error: live-nrqe.csv does not exist.")
+            break
+        # Write to individual CSV
+        with open(f'quality-metrics/{prefix}-{video_num}.csv', 'a', newline='') as csvfile:
             metric_writer = csv.writer(csvfile, delimiter=',')
-            metric_writer.writerow(csv_out)
+            # metric_writer.writerows()
+            metric_writer.writerow(csv_label[1:])
+            metric_writer.writerow(csv_out[1:])
+        video_num += 1
     print("Total Time Elapsed: ", time.perf_counter() - start_time)
