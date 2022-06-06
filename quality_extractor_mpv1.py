@@ -1,5 +1,6 @@
 # Process 1 contains color, contrast, noise, blur, block, brisque nrqe_metrics
-# Process 2 contains flickering metrics
+# Process 2 contains LTP metric
+# Process 3 contains flickering metrics
 # In 1 second video clip, script runs in approximately 167 seconds.
 
 import block as Blockiness
@@ -8,6 +9,7 @@ import contrastAndColorMetric as CCMetric
 import noisev1 as Noise
 import nrqe_metrics as NRQEmetrics
 import frameExtraction
+import LTPExtractionMetric as LTP
 import os.path
 import cv2
 import brisque
@@ -23,30 +25,7 @@ def addFrameStats(input_list, out_list):
     out_list.append(np.min(input_list))
 
 
-def flickeringLoop(framesfolder_path, vidname, csv_out):
-    csv2 = []
-    # flickering_time = time.perf_counter()
-    frame_list = os.listdir(framesfolder_path)
-    frame_list.sort()
-    frame_data = []
-    for frame in frame_list:
-        full_path = framesfolder_path + frame
-        # some metrics require frame to already be read with opencv
-        cv_frame = cv2.imread(full_path)
-        # some metrics require an array of frame data. So build it
-        frame_data.append(cv_frame)
-    # FLICKERING
-    frame_list = os.listdir(framesfolder_path)
-    frame_list.sort()
-    # print(f"frame data: {frame_list}")
-    np_frame_array = np.array(frame_data)
-    # flickering_time = time.perf_counter()
-    csv2.append(NRQEmetrics.temporalFlickering(np_frame_array))
-    # print("Time Elapsed for flickering: ", time.perf_counter() - flickering_time)
-    csv_out.send(csv2) # send the output to p1 Pipe output
-
-
-def qualityMetricLoop(framesfolder_path, vidname, csv_out):
+def p1qualityMetricLoop(framesfolder_path, vidname, csv_out):
     brisq = brisque.BRISQUE()
     # lists of each frame's metrics
     blockiness_list = []
@@ -85,7 +64,7 @@ def qualityMetricLoop(framesfolder_path, vidname, csv_out):
                 contrast_list[i].append(contrast_metrics[i])
             noise_list.append(Noise.noise(cv_frame))
             # BRISQUE output is 0-100. Easy to normalize now
-            if np.mean(cv_frame) == 0: #Check for any solid color frame
+            if np.mean(cv_frame) == 0:  # Check for any solid color frame
                 brisque_list.append(0)
             else:
                 brisque_list.append(brisq.get_score(cv_frame) / 100)
@@ -119,8 +98,62 @@ def qualityMetricLoop(framesfolder_path, vidname, csv_out):
     addFrameStats(noise_list, csv1)
     # BRISQUE
     addFrameStats(brisque_list, csv1)
-    # print("Time Elapsed for blur, block, noise, color, contrast: ", time.perf_counter() - start_time)
-    csv_out.send(csv1) # send the output to p1 Pipe output
+    print("Time Elapsed for blur, block, noise, color, contrast, BRISQUE: ",
+          time.perf_counter() - start_time)
+    csv_out.send(csv1)  # send the output to p1 Pipe output
+
+
+def p2LTPMetricLoop(framesfolder_path, vidname, csv_out):
+    ltp_list = []
+    csv2 = []
+    # list of each frame's pixel values
+    frame_data = []
+    frame_list = os.listdir(framesfolder_path)
+    frame_list.sort()
+    frame_prev = -1
+    #start_time = time.perf_counter()
+    for frame in frame_list:
+        full_path = framesfolder_path + frame
+        # some metrics require frame to already be read with opencv
+        cv_frame = cv2.imread(full_path)
+        # some metrics require an array of frame data. So build it
+        frame_data.append(cv_frame)
+        # Check for freeze frame
+        if np.mean(frame_prev) != np.mean(cv_frame):
+            ltp_list.append(LTP.getLTPimage(full_path))
+            print(LTP.getLTPimage(full_path))
+            frame_prev = cv_frame
+        else:  # Freeze frame occured
+            frame_data.append(cv_frame)
+            ltp_list.append(ltp_list[len(ltp_list)-1])
+    # LTP
+    addFrameStats(ltp_list, csv2)
+    # print("Time Elapsed for LTP: ",  time.perf_counter() - start_time)
+    csv_out.send(csv2)  # send the output to p2 Pipe output
+
+
+def p3flickeringLoop(framesfolder_path, vidname, csv_out):
+    csv3 = []
+    frame_list = os.listdir(framesfolder_path)
+    frame_list.sort()
+    frame_data = []
+    frame_prev = -1
+    for frame in frame_list:
+        full_path = framesfolder_path + frame
+        # some metrics require frame to already be read with opencv
+        cv_frame = cv2.imread(full_path)
+        # some metrics require an array of frame data. So build it
+        if np.mean(frame_prev) != np.mean(cv_frame):
+            frame_data.append(cv_frame)
+            frame_prev = cv_frame
+    frame_list = os.listdir(framesfolder_path)
+    frame_list.sort()
+    # print(f"frame data: {frame_list}")
+    np_frame_array = np.array(frame_data)
+    #flickering_time = time.perf_counter()
+    csv3.append(NRQEmetrics.temporalFlickering(np_frame_array))
+    # print("Time Elapsed for flickering: ", time.perf_counter() - flickering_time)
+    csv_out.send(csv3)  # send the output to p3 Pipe output
 
 
 if __name__ == "__main__":
@@ -134,7 +167,7 @@ if __name__ == "__main__":
                  'max_color8', 'min_color8', 'avg_contrast1', 'max_contrast1', 'min_contrast1', 'avg_contrast1', 'max_contrast2', 'min_contrast2', 'avg_contrast3',
                  'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
                  'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
-                 'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
+                 'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque', 'avg_LTP', 'max_LTP', 'min_LTP', 'avg_flicker']
 
     with open('live-nrqe.csv', 'a', newline='') as csv_file:
         metric_writer = csv.writer(csv_file, delimiter=',')
@@ -149,24 +182,33 @@ if __name__ == "__main__":
         csv_out1in, csv_out1o = mp.Pipe()
         # initialize p2 Pipe
         csv_out2in, csv_out2o = mp.Pipe()
+        # initialize p3 Pipe
+        csv_out3in, csv_out3o = mp.Pipe()
         # p1 (blur, block, contrast, color, BRISQUE)
-        p1 = mp.Process(target=qualityMetricLoop, args=(
+        p1 = mp.Process(target=p1qualityMetricLoop, args=(
             output_path + frame_folder + "/", prefix + ".mp4", csv_out1in,))
-        # p2 (flickering)
-        p2 = mp.Process(target=flickeringLoop, args=(
+        # p2 (LTP Extraction Metric)
+        p2 = mp.Process(target=p2LTPMetricLoop, args=(
             output_path + frame_folder + "/", prefix + ".mp4", csv_out2in,))
+        # p3 (flickering)
+        p3 = mp.Process(target=p3flickeringLoop, args=(
+            output_path + frame_folder + "/", prefix + ".mp4", csv_out3in,))
         p1.start()
         p2.start()
-        # Receive output from p1 and p2 PIPE
+        p3.start()
+        # Receive output from Pipes
         csv_out1 = csv_out1o.recv()
         csv_out2 = csv_out2o.recv()
+        csv_out3 = csv_out3o.recv()
         p1.join()
         p2.join()
+        p3.join()
         # Kill processes
         p1.terminate()
         p2.terminate()
-        # Combine csv outputs from the 2 processes
-        csv_out = csv_out1 + csv_out2
+        p3.terminate()
+        # Combine csv outputs from the 3 processes
+        csv_out = csv_out1 + csv_out2 + csv_out3
         # WRITE TO CSV
         with open('live-nrqe.csv', 'a', newline='') as csvfile:
             metric_writer = csv.writer(csvfile, delimiter=',')
