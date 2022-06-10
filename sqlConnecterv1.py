@@ -11,7 +11,7 @@ import mysql.connector
 #The Stream class will handle all the data as well as hanlde the SQL injection (updating)
 
 class Stream:
-    def __init__(self, connectionDB, stream_id, location_id,):
+    def __init__(self, connectionDB, stream_id, location_id):
         try:
             self.connectionDB = connectionDB
             self.status = 1
