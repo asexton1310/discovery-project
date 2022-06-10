@@ -5,6 +5,7 @@ import numpy as np
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import logging
+import ffmpeg
 
 class NewFrameEventHandler(PatternMatchingEventHandler):
     def on_any_event(self, event):
@@ -152,7 +153,7 @@ def extractFrameWebcam(output_dir, sample_rate):
         frame_pos += 1 
     cap.release()
 
-def sampleStream(stream_address, sample_rate, output_path):
+def sampleStreamCMDline(stream_address, sample_rate, output_path):
     # use ffmpeg commandline to sample frames from a live h264 stream within a folder
     # frames will be stored as PNGs for later steps in processing chain to read
     # Note that a much better implementation would be to sample a stream and save frames
@@ -195,6 +196,36 @@ def getLiveFrames(path):
         observer.stop()
     observer.join()
 
+def sampleStream(in_file, output_path):
+    # uses python wrapper for ffmpeg commandline to sample frames from a 
+    # live h264 stream ( or other input video ). frames will be stored as 
+    # PNGs in a folder for later steps in processing chain to read
+    # in_file        - input udp address of the h264 stream, or path to input video
+    # output_path    - path to folder that will contain output pngs
+
+    # Livestream testing procedure:
+    # get another computer with ffmpeg cmd-line tool installed
+    # identify ip address of computer receiving the stream and 
+    # identify open udp port of computer receiving the stream
+    # run this function on computer reciving the stream with udp address as
+    # in_file and a chosen output folder as output_path
+    # Example:  sampleStream('udp://10.0.0.30:9090', './temp/')
+    # Next:
+    # run following command on second computer (the one streaming to receiver)
+    #   ffmpeg -list_devices true -f dshow -i dummy     
+    # look for webcam device name in results of above command then run:
+    #   ffmpeg -f dshow -i video="__DEVICENAMEHERE__" -vcodec libx264 -f h264 udp://__IPADDRESS__:__UDPPORT__
+    # Example of above: ffmpeg -f dshow -i video="Integrated Webcam" -vcodec libx264 -f h264 udp://10.0.0.30:9090
+    
+    decoder = (
+        ffmpeg
+        .input(in_file)
+        .filter('fps')
+        .output(f'{output_path}frame-%d.png')
+        .run()
+    )
+    decoder(in_file)
+
 if __name__ == "__main__":
     #extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
     #extractFrameLoop('./temp/','./live-frames/', 2)
@@ -204,4 +235,5 @@ if __name__ == "__main__":
     # ts = str(int(time.time())) # timestamp for unique filenames
 
     # saveFrames(frames, step, ts, "./distortedFrames/")
-    getLiveFrames("./temp/")
+    # getLiveFrames("./temp/")
+    sampleStream('udp://10.0.0.30:9090', './temp/')

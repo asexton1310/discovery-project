@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from scipy import stats as sp
+from keras import backend as K
 
 class PearsonCorrelation(tf.keras.metrics.Metric):
     """
@@ -35,10 +36,12 @@ class PearsonCorrelation(tf.keras.metrics.Metric):
         count = self.count.result()
         mean_yp = self.mean_yp.result()
         mean_yt = self.mean_yt.result()
-        numerator = (self.cov.result() - count * self.mean_yp.result() * self.mean_yt.result())
+        numerator = (self.cov.result() - count * mean_yp * mean_yt)
         denominator = tf.sqrt(self.sq_yp.result() - count * mean_yp**2) * \
                       tf.sqrt(self.sq_yt.result() - count * mean_yt**2)
-        return numerator / denominator
+        r = numerator / denominator
+        r = tf.maximum(tf.minimum(r, 1.0), -1.0)
+        return r
 
     def reset_state(self):
         self.cov.reset_state()
@@ -67,6 +70,26 @@ class SpearmanCorrelation(tf.keras.metrics.Metric):
     def result(self):   
         return ( tf.py_function(sp.spearmanr, [self.y_pred, self.y_true], Tout = tf.float32) )
 
+def PLCC(y_true, y_pred):
+    """
+    Calculates Pearson Linear Correlation Coefficient
+
+    Code by stackoverflow user Julio Daniel Reyes, available at: 
+    https://stackoverflow.com/questions/46619869/how-to-specify-the-correlation-coefficient-as-the-loss-function-in-keras
+
+    """
+    x = tf.cast(y_pred, tf.float32)
+    y = tf.cast(y_true, tf.float32) 
+    mx = K.mean(x)
+    my = K.mean(y)
+    xm, ym = x-mx, y-my
+    r_num = K.sum(tf.multiply(xm,ym))
+    r_den = K.sqrt(tf.multiply(K.sum(K.square(xm)), K.sum(K.square(ym))))
+    r = r_num / r_den
+
+    r = K.maximum(K.minimum(r, 1.0), -1.0)
+    return r
+
 if __name__ == "__main__":
 
     """
@@ -87,6 +110,7 @@ if __name__ == "__main__":
     for i in range(inputa.shape[0]):
         f1.update_state(inputa[i], inputb[i])
         f2.update_state(inputa[i], inputb[i])
+        f3_res = PLCC(inputa[i],inputb[i]).numpy()
         scipy_result = sp.pearsonr(inputa[i], inputb[i])[0]
         scipy_spear = sp.spearmanr(inputa[i], inputb[i])[0]
         np_res = np.corrcoef(inputa[i], inputb[i])
@@ -94,7 +118,10 @@ if __name__ == "__main__":
         print("correlation_coefficient: ",f2.result().numpy())
         print("scipy.stats.pearsonr: " + str(scipy_result)) 
         print("np.corrcoef: " + str(np_res))
+        print("PLCC: ",f3_res)
+        print()
         print("spearman_coefficient: ",f1.result().numpy())
         print("scipy.stats.spearman: " + str(scipy_spear)) 
         print()
+        f1.reset_state()
         f2.reset_state()

@@ -18,7 +18,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         
         # load model used to make predictions
         self.model = tf.keras.models.load_model(model_loc,
-                                        custom_objects={"PearsonCorrelation":custom_metrics.PearsonCorrelation,
+                                        custom_objects={"PLCC":custom_metrics.PLCC,
                                                         "SpearmanCorrelation":custom_metrics.SpearmanCorrelation})
         # Check its architecture
         print(self.model.summary())
@@ -58,7 +58,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         # delete the csv file now that we have made predictions
         os.remove(target_file)
 
-def getMetrics(path):
+def getMetrics(path, model_path):
     # Function that repeatedly polls a directory looking for
     # new csvs (extracted metrics) and uses an observer to
     # make predictions and delete them when the next csv is 
@@ -76,7 +76,7 @@ def getMetrics(path):
     #set up the event handler we want the watchdog observer to use
     event_handler = NewMetricEventHandler(patterns=['*.csv'],
                                          ignore_directories=True,
-                                         model_loc="./savedModels/feedfw-nn-1/")
+                                         model_loc=model_path)
     # Create, configure, and start the observer                                     
     observer = Observer()
     observer.schedule(event_handler, path)
@@ -90,4 +90,4 @@ def getMetrics(path):
     observer.join()
 
 if __name__ == "__main__":
-    getMetrics("./quality-metrics/")
+    getMetrics("./quality-metrics/", model_path="./savedModels/feedfw-nn-2022-06-09_18-30-34/")
