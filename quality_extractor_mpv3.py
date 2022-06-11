@@ -9,6 +9,7 @@ import noisev1 as Noise
 import nrqe_metrics as NRQEmetrics
 import frameExtraction
 import os.path
+import shutil
 from pathlib import Path
 import cv2
 import brisque
@@ -20,6 +21,7 @@ import LTPExtractionMetric
 import logging
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
+
 
 class NewFrameEventHandler(PatternMatchingEventHandler):
     # filesystem watchdog for integrating frame extractor with quality
@@ -33,56 +35,56 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
     def on_any_event(self, event):
         #for testing purposes, log every event
         logging.info(event)
-    
+
+    def on_moved(self, event):
+        self.on_created(event)
+
     def on_created(self, event):
-        # when a new png file is created, process the previous one
-        # this avoids any potential issues with processing a newly
-        # created png file before it is finished being written to
-        
-        # split png number and extension from the rest of the path
-        prefix, num_ext = event.src_path.rsplit("-", 1)
+        filename = event.dest_path
+        prefix, name, num_ext = filename.rsplit("-", 2)
         # split png number and extension
         sample_num, ext = os.path.splitext(num_ext)
-        # get the previous csv file's number
+        # get the previous PNG file's number
         target_num = int(sample_num) - 1
-
         if target_num < 0:
             print(f"No target, fnum too low")
             return
 
         # reconstruct path to previous png file (target file)
-        target_file = f"{prefix}-{target_num}{ext}"
+        target_file = f"{prefix}-{name}-{target_num}"
         print(f"Target File: {target_file}")
-       
-        ####  CODE TO RUN PER-FRAME GOES HERE  ####
 
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
-        
-        # delete the csv file now that we have made predictions
-        os.remove(target_file)
+        buildDeploymentCSV(target_file)
+        ####  CODE TO RUN PER-FRAME GOES HERE  ####
+        # delete the previous png folder now3
+        # os.remove(str(target_file))
+        shutil.rmtree(target_file)
+        print("delete sucessful")
+
 
 def getFrames(path):
     # Function that repeatedly polls a directory looking for
     # new frame folders (of extracted frame pngs) and uses an observer to
-    # make predictions and delete them when the next frame folder is 
+    # make predictions and delete them when the next frame folder is
     # available.  Modified from quickstart example in
     # Python watchdog library documentation
     # https://github.com/gorakhargosh/watchdog
     #
     # path - folder to watch for new frame folders
-
     # set up logging for debugging
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
-    
-    #set up the event handler we want the watchdog observer to use
-    event_handler = NewFrameEventHandler(patterns=['*-frames'],
+
+    # set up the event handler we want the watchdog observer to use
+    event_handler = NewFrameEventHandler(patterns=['*video-*'],
                                          ignore_directories=False)
-    # Create, configure, and start the observer                                     
+    # Create, configure, and start the observer
     observer = Observer()
     observer.schedule(event_handler, path)
     observer.start()
+    print("Looking for folder...")
     # while loop with exception so the user is able to interrupt execution
     try:
         while True:
@@ -105,18 +107,18 @@ def buildTrainingCSV():
                  'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
                  'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
                  'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque']
-    # for testing integration ONLY 
-    int_csv_label = ['video', 'avg_blockiness', 'max_blockiness', 'min_blockiness', 'avg_blur', 'max_blur', 'min_blur', 
-                 'avg_contrast1', 'max_contrast1', 'min_contrast1', 'avg_contrast1', 'max_contrast2', 'min_contrast2', 'avg_contrast3',
-                 'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
-                 'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
-                 'avg_color1', 'max_color1', 'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
-                 'avg_color5', 'max_color5', 'min_color5', 'avg_color6', 'max_color6', 'min_color6', 'avg_color7', 'max_color7', 'min_color7', 'avg_color8',
-                 'max_color8', 'min_color8', 'avg_ltp', 'max_ltp', 'min_ltp', 'avg_noise', 'max_noise', 'min_noise',
-                 'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
-    
+    # for testing integration ONLY
+    int_csv_label = ['video', 'avg_blockiness', 'max_blockiness', 'min_blockiness', 'avg_blur', 'max_blur', 'min_blur',
+                     'avg_contrast1', 'max_contrast1', 'min_contrast1', 'avg_contrast1', 'max_contrast2', 'min_contrast2', 'avg_contrast3',
+                     'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
+                     'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
+                     'avg_color1', 'max_color1', 'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
+                     'avg_color5', 'max_color5', 'min_color5', 'avg_color6', 'max_color6', 'min_color6', 'avg_color7', 'max_color7', 'min_color7', 'avg_color8',
+                     'max_color8', 'min_color8', 'avg_ltp', 'max_ltp', 'min_ltp', 'avg_noise', 'max_noise', 'min_noise',
+                     'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
+
     path2file = "live-nrqe2.csv"
-    
+
     path = Path(path2file)
     if path.is_file():
         print("File already exists")
@@ -169,8 +171,7 @@ def buildTrainingCSV():
     print("Total Time Elapsed: ", time.perf_counter() - start_time)
 
 
-def buildDeploymentCSV():
-    input_path = "./live-frames/"
+def buildDeploymentCSV(path):
     # identify labels for CSV file
     csv_label = ['video_name', 'block_avg', 'block_max', 'block_min', "blur_avg", "blur_max", "blur_min", 'avg_color1', 'max_color1',
                  'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
@@ -179,58 +180,55 @@ def buildDeploymentCSV():
                  'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
                  'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
                  'avg_noise', 'max_noise', 'min_noise', 'avg_brisque', 'max_brisque', 'min_brisque']
-    # for testing integration ONLY 
-    int_csv_label = ['video', 'avg_blockiness', 'max_blockiness', 'min_blockiness', 'avg_blur', 'max_blur', 'min_blur', 
-                 'avg_contrast1', 'max_contrast1', 'min_contrast1', 'avg_contrast1', 'max_contrast2', 'min_contrast2', 'avg_contrast3',
-                 'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
-                 'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
-                 'avg_color1', 'max_color1', 'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
-                 'avg_color5', 'max_color5', 'min_color5', 'avg_color6', 'max_color6', 'min_color6', 'avg_color7', 'max_color7', 'min_color7', 'avg_color8',
-                 'max_color8', 'min_color8', 'avg_ltp', 'max_ltp', 'min_ltp', 'avg_noise', 'max_noise', 'min_noise',
-                 'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
+    # for testing integration ONLY
+    int_csv_label = ['video', 'avg_blockiness', 'max_blockiness', 'min_blockiness', 'avg_blur', 'max_blur', 'min_blur',
+                     'avg_contrast1', 'max_contrast1', 'min_contrast1', 'avg_contrast1', 'max_contrast2', 'min_contrast2', 'avg_contrast3',
+                     'max_contrast3', 'min_contrast3', 'avg_contrast4', 'max_contrast4', 'min_contrast4', 'avg_contrast5', 'max_contrast5', 'min_contrast5', 'avg_contrast6', 'max_contrast6',
+                     'min_contrast6', 'avg_contrast7', 'max_contrast7', 'min_contrast7', 'avg_contrast8', 'max_contrast8', 'min_contrast8', 'avg_contrast9', 'max_contrast9', 'min_contrast9',
+                     'avg_color1', 'max_color1', 'min_color1', 'avg_color2', 'max_color2', 'min_color2', 'avg_color3', 'max_color3', 'min_color3', 'avg_color4', 'max_color4', 'min_color4',
+                     'avg_color5', 'max_color5', 'min_color5', 'avg_color6', 'max_color6', 'min_color6', 'avg_color7', 'max_color7', 'min_color7', 'avg_color8',
+                     'max_color8', 'min_color8', 'avg_ltp', 'max_ltp', 'min_ltp', 'avg_noise', 'max_noise', 'min_noise',
+                     'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
 
     start_time = time.perf_counter()
-
-    video_num = 0
-    for frame_folder in os.listdir(input_path):
-        prefix, _ = frame_folder.split('-')
-        csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
-        csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-        csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
-        # Process p1 (noise, blur, block, contrast)
-        p1 = mp.Process(target=p1MetricsLoop, args=(
-            input_path + frame_folder + "/", prefix + ".mp4", csv_in1,))
-        # Process p2 (color)
-        p2 = mp.Process(target=p2MetricsLoop, args=(
-            input_path + frame_folder + "/", prefix + ".mp4", csv_in2,))
-        # Process p3 (brisque)
-        p3 = mp.Process(target=p3MetricsLoop, args=(
-            input_path + frame_folder + "/", prefix + ".mp4", csv_in3,))
-        # Start the processes
-        p1.start()
-        p2.start()
-        p3.start()
-        # retreive Pipe output of csv lists
-        csv_out1 = csv_out1.recv()  # return list of csv values for p1 metrics
-        csv_out2 = csv_out2.recv()  # return list of csv values for p2 metrics
-        csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
-        p1.join()
-        p2.join()
-        p3.join()
-        # kill processes
-        p1.terminate()
-        p2.terminate()
-        p3.terminate()
-        # Acheive total CSV list with appropriate outputs
-        csv_out = csv_out1 + csv_out2 + csv_out3
-        # Write to individual CSV
-        csv_prefix = "video"
-        with open(f'quality-metrics/{csv_prefix}-{video_num}.csv', 'a', newline='') as csvfile:
-            metric_writer = csv.writer(csvfile, delimiter=',')
-            # metric_writer.writerows()
-            metric_writer.writerow(int_csv_label[1:])
-            metric_writer.writerow(csv_out[1:])
-        video_num += 1
+    prefix, name, num_ext = path.rsplit("-", 2)
+    pre, vidname = name.rsplit('\\', 1)
+    csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
+    csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
+    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
+    # Process p1 (noise, blur, block, contrast)
+    p1 = mp.Process(target=p1MetricsLoop, args=(
+        path + "/", vidname + ".mp4", csv_in1,))
+    # Process p2 (color)
+    p2 = mp.Process(target=p2MetricsLoop, args=(
+        path + "/", vidname + ".mp4", csv_in2,))
+    # Process p3 (brisque)
+    p3 = mp.Process(target=p3MetricsLoop, args=(
+        path + "/", vidname + ".mp4", csv_in3,))
+    # Start the processes
+    p1.start()
+    p2.start()
+    p3.start()
+    # retreive Pipe output of csv lists
+    csv_out1 = csv_out1.recv()  # return list of csv values for p1 metrics
+    csv_out2 = csv_out2.recv()  # return list of csv values for p2 metrics
+    csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
+    p1.join()
+    p2.join()
+    p3.join()
+    # kill processes
+    p1.terminate()
+    p2.terminate()
+    p3.terminate()
+    # Acheive total CSV list with appropriate outputs
+    csv_out = csv_out1 + csv_out2 + csv_out3
+    # Write to individual CSV
+    csv_prefix = "video"
+    with open(f'quality-metrics/{csv_prefix}-{num_ext}.csv', 'a', newline='') as csvfile:
+        metric_writer = csv.writer(csvfile, delimiter=',')
+        # metric_writer.writerows()
+        metric_writer.writerow(int_csv_label[1:])
+        metric_writer.writerow(csv_out[1:])
     print("Total Time Elapsed: ", time.perf_counter() - start_time)
 
 
@@ -334,10 +332,10 @@ def p1MetricsLoop(framesfolder_path, vidname, csv_out):
 def p2MetricsLoop(framesfolder_path, vidname, csv_out):
     brisq = brisque.BRISQUE()
     # lists of each frame's metrics
-    brisque_sum  = 0
+    brisque_sum = 0
     ltp_sum = 0
     noise_sum = 0
-    
+
     ltp_prev = 0
     noise_prev = 0
     brisque_prev = 0
@@ -357,7 +355,7 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
         frame_data.append(cv_frame)
         frame_count += 1
         if np.mean(frame_prev) != np.mean(cv_frame):
-            ltp_prev = ltp_val = LTPExtractionMetric.getLTPimage(full_path)  
+            ltp_prev = ltp_val = LTPExtractionMetric.getLTPimage(full_path)
             ltp_sum += ltp_val
 
             noise_prev = noise_val = Noise.noise(cv_frame)
@@ -367,7 +365,7 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
             # if frame is a solid color, brisque will return error, as expected
             if np.mean(cv_frame) != 0:
                 # BRISQUE output is 0-100. Easy to normalize now
-                brisque_prev = brisque_val = brisq.get_score(cv_frame) / 100 
+                brisque_prev = brisque_val = brisq.get_score(cv_frame) / 100
                 brisque_sum += brisque_val
 
             if frame_count == 1:
@@ -375,7 +373,7 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
                 ltp_max = ltp_min = ltp_val
                 noise_max = noise_min = noise_val
                 brisque_max = brisque_min = brisque_val
-            else:                
+            else:
                 # LTP
                 if ltp_val > ltp_max:
                     ltp_max = ltp_val
@@ -397,7 +395,6 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
             noise_sum += noise_prev
             brisque_sum += brisque_prev
 
-
     # LTP
     csv2.append(ltp_sum / frame_count)
     csv2.append(ltp_max)
@@ -413,14 +410,15 @@ def p2MetricsLoop(framesfolder_path, vidname, csv_out):
     csv2.append(brisque_max)
     csv2.append(brisque_min)
 
-    print("Time Elapsed for ltp, noise, BRISQUE: ", time.perf_counter() - start_time)
+    print("Time Elapsed for ltp, noise, BRISQUE: ",
+          time.perf_counter() - start_time)
     csv_out.send(csv2)  # Send list to output of Pipe
 
 
 def p3MetricsLoop(framesfolder_path, vidname, csv_out):
-    flick_sum    = 0
+    flick_sum = 0
 
-    flick_prev   = 0
+    flick_prev = 0
     csv3 = []  # This will be the list I am sending to the output of the Pipe
     # list of each frame's pixel values
     frame_list = os.listdir(framesfolder_path)
@@ -428,7 +426,7 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
     frame_prev = -1
 
     frame_count = 0
-    flick_sum   = 0
+    flick_sum = 0
 
     start_time = time.perf_counter()
     for frame in frame_list:
@@ -442,14 +440,16 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
             if frame_count == 1:
                 # set MAX and MIN
                 # temporal flickering
-                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame)
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
+                    cv_frame)
             else:
                 # temporal flickering
-                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame, prev_temporal, prev_msds)
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
+                    cv_frame, prev_temporal, prev_msds)
             flick_prev = flick_ratio
             flick_sum += flick_ratio
         else:  # freeze frame occured
-            flick_sum   += flick_prev
+            flick_sum += flick_prev
 
     # TEMPORAL FLICKERNG
     csv3.append(flick_sum / frame_count)
@@ -460,4 +460,5 @@ def p3MetricsLoop(framesfolder_path, vidname, csv_out):
 
 if __name__ == "__main__":
    getFrames('live-frames')
+   #buildDeploymentCSV()
    #buildDeploymentCSV()
