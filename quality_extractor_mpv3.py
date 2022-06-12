@@ -40,10 +40,9 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
         self.on_created(event)
 
     def on_created(self, event):
-        filename = event.dest_path
-        prefix, name, num_ext = filename.rsplit("-", 2)
-        # split png number and extension
-        sample_num, ext = os.path.splitext(num_ext)
+        filename = event.src_path
+        prefix, sample_num, postfix = filename.rsplit("-", 2)
+       
         # get the previous PNG file's number
         target_num = int(sample_num) - 1
         if target_num < 0:
@@ -51,7 +50,7 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
             return
 
         # reconstruct path to previous png file (target file)
-        target_file = f"{prefix}-{name}-{target_num}"
+        target_file = f"{prefix}-{target_num}-{postfix}"
         print(f"Target File: {target_file}")
 
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
@@ -192,7 +191,9 @@ def buildDeploymentCSV(path):
 
     start_time = time.perf_counter()
     prefix, name, num_ext = path.rsplit("-", 2)
-    pre, vidname = name.rsplit('\\', 1)
+    print ("prefix, name, num_ext: ", prefix, name, num_ext)
+    vidname = name
+
     csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
     csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
     csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)

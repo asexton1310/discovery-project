@@ -31,19 +31,23 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
         sample_num, ext = os.path.splitext(num_ext)
 
         #check if this is our nth frame
-        if sample_num == (self.segment + 1) * self.n:
+        if int(sample_num) == (self.segment + 1) * self.n + 1:
             # do the processing,
             new_dir = f"./live-frames/video-{self.segment}-frames"
-            os.mkdir(new_dir)
+            
+            if not os.path.isdir(new_dir):
+                os.mkdir(new_dir)
+            
             target_num = int(sample_num) - self.n
 
             for i in range(target_num, target_num + self.n):
-                target_file  = f"{prefix}-{target_num}.{ext}"
-                new_location = f"{new_dir}/frame-{target_num}.{ext}"
+                target_file  = f"{prefix}-{i}{ext}"
+                new_location = f"{new_dir}/frame-{i}{ext}"
                 #move file to new directory.
-                os.replace(target_file,new_location)
+                os.rename(target_file,new_location)
+            self.segment += 1
         else:
-            print(f"frame not multiple of {self.n}")
+            print(f"frame not multiple of {self.n} + 1")
             return
 
 def saveFrames(frames, step, filename, output_dir):
@@ -190,7 +194,7 @@ def sampleStreamCMDline(stream_address, sample_rate, output_path):
     # if we access files directly when polling the folder since sorting the pngs would not be needed.
     os.system(f"ffmpeg -c:v h264 -i {stream_address} -vf fps={sample_rate} {output_path}sample-%d.png")
 
-def getLiveFrames(path):
+def getLiveFrames(path, batch_size):
     # Function that repeatedly polls a directory looking for
     # new pngs (samples from livestream) and uses an observer to
     # process them when they are created, and delete them when the 
@@ -202,7 +206,7 @@ def getLiveFrames(path):
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
     event_handler = NewFrameEventHandler(patterns=['*.png'],
-                                         n=5,
+                                         n=batch_size,
                                          ignore_directories=True)
 
     # Create, configure, and start the observer                                     
@@ -245,7 +249,6 @@ def sampleStream(in_file, output_path):
         .output(f'{output_path}frame-%d.png')
         .run()
     )
-    decoder(in_file)
 
 if __name__ == "__main__":
     #extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
@@ -256,5 +259,5 @@ if __name__ == "__main__":
     # ts = str(int(time.time())) # timestamp for unique filenames
 
     # saveFrames(frames, step, ts, "./distortedFrames/")
-    getLiveFrames("./raw-frames/")
-    #sampleStream('udp://10.0.0.30:9090', './raw-frames/')
+    #getLiveFrames("./raw-frames/")
+    sampleStream('./live-test/B311.mp4', './raw-frames/')
