@@ -8,24 +8,43 @@ import logging
 import ffmpeg
 
 class NewFrameEventHandler(PatternMatchingEventHandler):
+    def __init__(self, n=None, **kwargs):
+        super().__init__(**kwargs)
+        
+        # number of frames to bundle as a video
+        self.n = n
+        self.segment = 0
+
     def on_any_event(self, event):
         #for testing purposes, log every event
         logging.info(event)
     
     def on_created(self, event):
-        print(f"File created: {event.src_path}")
-        prefix, num_ext = event.src_path.split("-")
+        # when a new png file is created, process the previous one
+        # this avoids any potential issues with processing a newly
+        # created png file before it is finished being written to
+        
+        # split png number and extension from the rest of the path
+        prefix, num_ext = event.src_path.rsplit("-", 1)
+
+        # split png number and extension
         sample_num, ext = os.path.splitext(num_ext)
-        target_num = int(sample_num) - 1
 
-        if target_num < 1:
-            print(f"No target, fnum too low")
+        #check if this is our nth frame
+        if sample_num == (self.segment + 1) * self.n:
+            # do the processing,
+            new_dir = f"./live-frames/video-{self.segment}-frames"
+            os.mkdir(new_dir)
+            target_num = int(sample_num) - self.n
+
+            for i in range(target_num, target_num + self.n):
+                target_file  = f"{prefix}-{target_num}.{ext}"
+                new_location = f"{new_dir}/frame-{target_num}.{ext}"
+                #move file to new directory.
+                os.replace(target_file,new_location)
+        else:
+            print(f"frame not multiple of {self.n}")
             return
-
-        target_file = f"{prefix}-{target_num}{ext}"
-        print(f"Target File: {target_file}")
-        #process target file before deleting it, but make sure to delete it when done
-        os.remove(target_file)
 
 def saveFrames(frames, step, filename, output_dir):
     #uses openCV for saving frames as png files
@@ -183,7 +202,9 @@ def getLiveFrames(path):
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
     event_handler = NewFrameEventHandler(patterns=['*.png'],
+                                         n=5,
                                          ignore_directories=True)
+
     # Create, configure, and start the observer                                     
     observer = Observer()
     observer.schedule(event_handler, path)
@@ -235,5 +256,5 @@ if __name__ == "__main__":
     # ts = str(int(time.time())) # timestamp for unique filenames
 
     # saveFrames(frames, step, ts, "./distortedFrames/")
-    # getLiveFrames("./temp/")
-    sampleStream('udp://10.0.0.30:9090', './temp/')
+    getLiveFrames("./raw-frames/")
+    #sampleStream('udp://10.0.0.30:9090', './raw-frames/')
