@@ -190,9 +190,9 @@ def buildDeploymentCSV(path):
                      'avg_brisque', 'max_brisque', 'min_brisque', 'avg_flicker']
 
     start_time = time.perf_counter()
-    prefix, name, num_ext = path.rsplit("-", 2)
-    print ("prefix, name, num_ext: ", prefix, name, num_ext)
-    vidname = name
+    prefix, sample_num, postfix = path.rsplit("-", 2)
+    print ("prefix, sample_num, postfix: ", prefix, sample_num, postfix)
+    vidname = sample_num
 
     csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
     csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
@@ -225,7 +225,7 @@ def buildDeploymentCSV(path):
     csv_out = csv_out1 + csv_out2 + csv_out3
     # Write to individual CSV
     csv_prefix = "video"
-    with open(f'quality-metrics/{csv_prefix}-{num_ext}.csv', 'a', newline='') as csvfile:
+    with open(f'quality-metrics/{csv_prefix}-{sample_num}.csv', 'a', newline='') as csvfile:
         metric_writer = csv.writer(csvfile, delimiter=',')
         # metric_writer.writerows()
         metric_writer.writerow(int_csv_label[1:])
