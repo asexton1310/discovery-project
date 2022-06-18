@@ -35,11 +35,10 @@ def calculateGD(frameInput):
 				sumOfGLBP = sumOfGLBP + GLBP
 		arrayOfGD.append(sumOfGLBP)
 	normalized_arrayOfGD= preprocessing.normalize([arrayOfGD]).flatten()
-	return normalized_arrayOfGD
-	#x_axis= range(len(normalized_arrayOfGD))
-	#plt.bar(x_axis, normalized_arrayOfGD, color ='blue', width = 0.4)
-	#plt.grid(True)
-	#plt.show()
+
+	#average the entire array of contrast GD
+	avgArrayOfGD= round(np.average(normalized_arrayOfGD),7)
+	return avgArrayOfGD
 
 #This function calculate features on HSV color space 
 #denoted as CS
@@ -65,19 +64,19 @@ def calculateCS(frameInput):
 		CS.append(KurtosisOfHSV[i])
 
 	normalized_arrayOfCS= preprocessing.normalize([CS]).flatten()
-	return normalized_arrayOfCS
-	#x_axis= range(len(normalized_arrayOfCS))
-	#plt.bar(x_axis, normalized_arrayOfCS, color ='blue', width = 0.4)
-	#plt.grid(True)
-	#plt.show()
+
+	#average the entire array of features on HSV color space 
+	avgArrayOfCS = round(np.average(normalized_arrayOfCS),8)
+	return avgArrayOfCS
+
 
 if __name__=="__main__":
 	imageTest="2.png"
 	imageTest2='3.png'
-	print(calculateGD(imageTest))
-	#print(calculateGD(imageTest2))
-	#print(calculateCS(imageTest))
-	#print(calculateCS(imageTest2))
+	print("Contrast 1: ",calculateGD(imageTest))
+	print("Contrast 2: ",calculateGD(imageTest2))
+	print("Color 1: ", calculateCS(imageTest))
+	print("Color 2: ",calculateCS(imageTest2))
 
 
 
