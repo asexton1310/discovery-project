@@ -18,7 +18,7 @@ def buildModel(input_shape):
     print(model.summary(), "\n")
 
     # compile model specifying optimizer and evaluation metrics
-    model.compile(optimizer='adam', 
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                 loss='mae',
                 metrics=['mae', custom_metrics.PLCC, custom_metrics.SpearmanCorrelation()])
     return model
@@ -31,7 +31,7 @@ def fitModel(model, X_train, y_train):
                 )
     return losses
 
-def saveModel(model, losses, save_folder):
+def saveModel(model, losses, eval_results, save_folder):
     # timestamp to uniquely identify the model
     ts = datetime.datetime.now( ).strftime("%Y-%m-%d_%H-%M-%S")
     # Save the entire model as a SavedModel.
@@ -39,6 +39,14 @@ def saveModel(model, losses, save_folder):
     if not os.path.isdir(savefile):
         os.makedirs(savefile)
     model.save(savefile)
+
+    with open(f"{save_folder}/metrics/feedfw-nn-{ts}.log", 'w', newline='') as metricFile:
+        num_epochs = len(losses.history['loss'])
+        metricFile.write(f"Epochs: {num_epochs}\n")
+        for i in range(num_epochs):
+            metricFile.write(f"Epoch {i} : [ MAE: {losses.history['mae'][i]}, PLCC: {losses.history['PLCC'][i]} SROCC: {losses.history['spearman_correlation'][i]}")
+            metricFile.write(f" Validation: Val_MAE: {losses.history['val_mae'][i]}, Val_PLCC: {losses.history['val_PLCC'][i]} Val_SROCC: {losses.history['val_spearman_correlation'][i]} ]\n")
+        metricFile.write(f"Evaluation results: [ MAE: {eval_results[1]}, PLCC: {eval_results[2]} SROCC: {eval_results[3]} ]\n")
 
     # visualization of training vs validation loss
     # history stores the loss/val for each epoch
@@ -118,7 +126,8 @@ model = buildModel(input_shape)
 losses = fitModel(model, X_train, y_train)
 
 # model is trained now, print evaluation results
-print('Test loss, test mae, test PLCC, test SROCC: ', model.evaluate(X_test, y_test))
+eval_results = model.evaluate(X_test, y_test)
+print('Test loss, test mae, test PLCC, test SROCC: ', eval_results)
 
 # try prediction with first 3 rows of test data
 print("Predictions: ")
@@ -129,4 +138,4 @@ print("Videos used: ")
 print(label_test.iloc[0:3])
 
 # save the model
-saveModel(model, losses, save_folder="./savedModels")
+saveModel(model, losses, eval_results, save_folder="./savedModels")
