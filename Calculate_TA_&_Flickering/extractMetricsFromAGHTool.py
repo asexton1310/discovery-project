@@ -37,6 +37,12 @@ def extractMetrics(inputFolder, inputScript):
 
 	for i in range(2, len(row)):
 		singleRow = row[i]
+		if (str(singleRow).find(".png") != -1):
+			i+=1
+			singleRow = row[i]
+		if (str(singleRow).find("Frame") != -1 ):
+			i+=1
+		singleRow = row[i]
 		for item in singleRow:
 			#It depend on team choice to decide whether we use this Temporal Activity from this tool 
 			#or the tool from Dr Kalva suggest
