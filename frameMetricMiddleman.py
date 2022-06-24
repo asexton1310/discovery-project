@@ -14,7 +14,8 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         #for testing purposes, log every event
-        logging.info(event)
+        #logging.info(event)
+        pass
     
     def on_created(self, event):
         # when a new png file is created, process the previous one
@@ -30,6 +31,7 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
         #check if this is our nth frame
         if int(sample_num) == (self.segment + 1) * self.n + 1:
             # do the processing,
+            print(f"Moving video {self.segment}")
             new_dir = f"./live-frames/video-{self.segment}-frames"
             
             if not os.path.isdir(new_dir):
@@ -44,7 +46,7 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
                 os.rename(target_file,new_location)
             self.segment += 1
         else:
-            print(f"frame not multiple of {self.n}")
+            #print(f"frame not multiple of {self.n}")
             return
 
 def getLiveFrames(path, batch_size):

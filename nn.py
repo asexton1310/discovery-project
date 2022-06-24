@@ -26,7 +26,7 @@ def buildModel(input_shape):
 def fitModel(model, X_train, y_train):
     losses = model.fit(X_train, y_train,
                 validation_split= 0.2,
-                batch_size = 256,
+                batch_size = 512,
                 epochs=300,
                 )
     return losses
@@ -51,7 +51,7 @@ def saveModel(model, losses, eval_results, save_folder):
     # visualization of training vs validation loss
     # history stores the loss/val for each epoch
     loss_df = pd.DataFrame(losses.history)
-    loss_df.loc[:,['loss','val_loss']].plot()
+    loss_df.loc[:,['loss','val_loss','PLCC','val_PLCC','spearman_correlation','val_spearman_correlation']].plot()
     plt.title("Training Results") 
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
