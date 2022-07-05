@@ -6,6 +6,7 @@ import scipy.stats as sp
 import custom_tf_metrics as custom_metrics
 import os
 import datetime
+import random
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 
@@ -26,21 +27,21 @@ def buildModel(input_shape):
 def fitModel(model, X_train, y_train):
     losses = model.fit(X_train, y_train,
                 validation_split= 0.2,
-                batch_size = 512,
-                epochs=300,
+                batch_size = 768,
+                epochs=2000,
                 )
     return losses
 
-def saveModel(model, losses, eval_results, save_folder):
+def saveModel(model, losses, eval_results, save_folder, dataset_used):
     # timestamp to uniquely identify the model
     ts = datetime.datetime.now( ).strftime("%Y-%m-%d_%H-%M-%S")
     # Save the entire model as a SavedModel.
-    savefile = f"{save_folder}/feedfw-nn-{ts}/"
+    savefile = f"{save_folder}/{dataset_used}-{ts}/"
     if not os.path.isdir(savefile):
         os.makedirs(savefile)
     model.save(savefile)
 
-    with open(f"{save_folder}/metrics/feedfw-nn-{ts}.log", 'w', newline='') as metricFile:
+    with open(f"{save_folder}/metrics/{dataset_used}-{ts}.log", 'w', newline='') as metricFile:
         num_epochs = len(losses.history['loss'])
         metricFile.write(f"Epochs: {num_epochs}\n")
         for i in range(num_epochs):
@@ -55,7 +56,7 @@ def saveModel(model, losses, eval_results, save_folder):
     plt.title("Training Results") 
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
-    plotfile = f"{save_folder}/plots/feedfw-nn-{ts}.png"
+    plotfile = f"{save_folder}/plots/{dataset_used}-{ts}.png"
     plt.savefig(plotfile)
 
 def kFoldCV(modelFunction, trainDF, valDF, k):
@@ -92,7 +93,8 @@ def kFoldCV(modelFunction, trainDF, valDF, k):
     print('results: ', results)
     print('Test loss, test mae, test PLCC, test SROCC: ', np.divide(results, 10))
 
-df = pd.read_csv('live-nrqe.csv')
+dataset_file = 'live-nrqe.csv'
+df = pd.read_csv(dataset_file)
 
 # split dataset into inputs and targets ( metrics/MOS )
 X_df = df.drop('mos', axis=1)
@@ -101,41 +103,46 @@ y_df = df['mos']
 # Do K-fold cross validation
 #kFoldCV(buildModel, X_df.drop('video',axis=1), y_df, 10)
 
-# further split dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X_df, y_df, test_size=0.2, random_state=4)
+if True:
+    # further split dataset into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X_df, y_df, test_size=0.2, random_state=4)
 
-#remove video title, since this is not necessary for training. 
-# store it separately though for easier performance analysis
-label_train, label_test = X_train['video'], X_test['video']
-X_train.drop('video',axis=1, inplace=True)
-X_test.drop('video',axis=1, inplace=True)
+    #remove video title, since this is not necessary for training. 
+    # store it separately though for easier performance analysis
+    label_train, label_test = X_train['video'], X_test['video']
+    X_train.drop('video',axis=1, inplace=True)
+    X_test.drop('video',axis=1, inplace=True)
 
-#normalize target data into range of (0,1)
-max_val = y_train.max(axis= 0)
-min_val = y_train.min(axis= 0)
-data_range = max_val - min_val
-y_train = (y_train - min_val)/(data_range)
-y_test =  (y_test - min_val)/(data_range)
+    #normalize target data into range of (0,1)
+    max_val = y_train.max(axis= 0)
+    min_val = y_train.min(axis= 0)
+    data_range = max_val - min_val
+    y_train = (y_train - min_val)/(data_range)
+    y_test =  (y_test - min_val)/(data_range)
 
-# number of features passed as input (metrics)
-input_shape = [X_train.shape[1]]
-print(input_shape,"\n")
+    # number of features passed as input (metrics)
+    input_shape = [X_train.shape[1]]
+    print(input_shape,"\n")
 
-# actually build and train the model
-model = buildModel(input_shape)
-losses = fitModel(model, X_train, y_train)
+    # actually build and train the model
+    model = buildModel(input_shape)
+    losses = fitModel(model, X_train, y_train)
 
-# model is trained now, print evaluation results
-eval_results = model.evaluate(X_test, y_test)
-print('Test loss, test mae, test PLCC, test SROCC: ', eval_results)
+    # model is trained now, print evaluation results
+    eval_results = model.evaluate(X_test, y_test)
+    print('Test loss, test mae, test PLCC, test SROCC: ', eval_results)
 
-# try prediction with first 3 rows of test data
-print("Predictions: ")
-print(model.predict(X_test.iloc[0:3, :]))
-print("Truth: ")
-print(y_test.iloc[0:3])
-print("Videos used: ")
-print(label_test.iloc[0:3])
+    # try prediction with 3 rows of test data
+    index_one = random.randrange(0,X_test.shape[0])
+    index_two = random.randrange(0,X_test.shape[0])
+    index_three = random.randrange(0,X_test.shape[0])
+    print("Predictions: ")
+    print(model.predict(X_test.iloc[[index_one,index_two,index_three], :]))
+    print("Truth: ")
+    print(y_test.iloc[[index_one,index_two,index_three]])
+    print("Videos used: ")
+    print(label_test.iloc[[index_one,index_two,index_three]])
 
-# save the model
-saveModel(model, losses, eval_results, save_folder="./savedModels")
+    # save the model
+    dataset_name, ext = os.path.splitext(dataset_file)
+    saveModel(model, losses, eval_results, save_folder="./savedModels", dataset_used=dataset_name)
