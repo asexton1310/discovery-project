@@ -38,7 +38,10 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
 
     def on_created(self, event):
         filename = event.src_path
-        prefix, sample_num, postfix = filename.rsplit("-", 2)
+        print("filename: ", filename)
+        prefix, sample_num = filename.rsplit("-", 1)
+        sample_num, postfix = sample_num.rsplit(".", 1)
+        print("sample num: ", sample_num)
 
         # get the previous PNG file's number
         target_num = int(sample_num) - 1
@@ -47,15 +50,14 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
             return
 
         # reconstruct path to previous png file (target file)
-        target_file = f"{prefix}-{target_num}-{postfix}"
+        target_file = f"{prefix}-{target_num}.{postfix}"
         print(f"Target File: {target_file}")
         print("begin metrics")
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
         buildDeploymentCSV(target_file)
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
-        # delete the previous png folder now3
-        # os.remove(str(target_file))
-        shutil.rmtree(target_file)
+        # delete the previous mp4 video
+        os.remove(target_file)
         print("delete sucessful")
 
 
@@ -77,7 +79,7 @@ def getFrames(path):
 
     # set up the event handler we want the watchdog observer to use
     event_handler = NewFrameEventHandler(
-        patterns=["*video-*"], ignore_directories=False
+        patterns=["*video-*.mp4"], ignore_directories=False
     )
     # Create, configure, and start the observer
     observer = Observer()
@@ -310,6 +312,8 @@ def buildTrainingCSV():
 
 
 def buildDeploymentCSV(path):
+    prefix, sample_num = path.rsplit("-", 1)
+    sample_num, postfix = sample_num.rsplit(".", 1)
     frame_list = create_framelist(path)
     print("frame_list length: ", len(frame_list))
     # identify labels for CSV file
@@ -448,7 +452,7 @@ def buildDeploymentCSV(path):
         "avg_brisque",
         "max_brisque",
         "min_brisque",
-        "avg_flicker",
+        # "avg_flicker",
         "flicker_avg_AGH",
         "flicker_max_AGH",
         "block_avg_AGH",
@@ -473,14 +477,11 @@ def buildDeploymentCSV(path):
         "si_avg",
         "ti_avg",
     ]
-    print("PATH: ", path)
     start_time = time.perf_counter()
-    prefix, sample_num, postfix = path.rsplit("-", 2)
-    print("prefix, sample_num, postfix: ", prefix, sample_num, postfix)
     vidname = sample_num
     csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
     csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
+    # csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
     csv_in4, csv_out4 = mp.Pipe()  # p4_AGH Pipe (AGH TOOL metrics)
     csv_in5, csv_out5 = mp.Pipe()  # p5_siti Pipe (SI, TI TOOL metrics)
     # Process p1 (noise, blur, block, contrast)
@@ -494,10 +495,10 @@ def buildDeploymentCSV(path):
         args=(path + "/", vidname + ".mp4", frame_list, csv_in2),
     )
     # Process p3 (brisque)
-    p3 = mp.Process(
-        target=p3MetricsLoop,
-        args=(path + "/", vidname + ".mp4", frame_list, csv_in3),
-    )
+    # p3 = mp.Process(
+    #    target=p3MetricsLoop,
+    #    args=(path + "/", vidname + ".mp4", frame_list, csv_in3),
+    # )
     # Process p4, AGH metrics
     p4_AGH = mp.Process(target=p4_AGH_tool, args=(path, csv_in4))
     # Process p5, SI, TI metrics
@@ -505,28 +506,30 @@ def buildDeploymentCSV(path):
     # Start the processes
     p1.start()
     p2.start()
-    p3.start()
+    # p3.start()
     p4_AGH.start()
     p5_siti.start()
     # retreive Pipe output of csv lists
     csv_out1 = csv_out1.recv()  # return list of csv values for p1 metrics
     csv_out2 = csv_out2.recv()  # return list of csv values for p2 metrics
-    csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
+    # csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
     csv_out4 = csv_out4.recv()  # return list of csv values for p4 metrics (AGH)
     csv_out5 = csv_out5.recv()  # return list of csv values for p5 metrics(SI, TI)
     p1.join()
     p2.join()
-    p3.join()
+    # p3.join()
     p4_AGH.join()
     p5_siti.join()
     # kill processes
     p1.terminate()
     p2.terminate()
-    p3.terminate()
+    # p3.terminate()
     p4_AGH.terminate()
     p5_siti.terminate()
     # Acheive total CSV list with appropriate outputs
-    csv_out = csv_out1 + csv_out2 + csv_out3 + csv_out4 + csv_out5
+    csv_out = (
+        csv_out1 + csv_out2 + csv_out4 + csv_out5
+    )  # csv_out3 + csv_out4 + csv_out5
     # Write to individual CSV
     csv_prefix = "video"
     with open(
@@ -540,8 +543,7 @@ def buildDeploymentCSV(path):
 
 
 def create_framelist(path):
-    for video in os.listdir(path):
-        cap = cv2.VideoCapture(path + "/" + video)
+    cap = cv2.VideoCapture(path)
     frame_list = []
     while cap.isOpened():
         ret, frame = cap.read()
@@ -722,8 +724,7 @@ def p2MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     csv2.append(brisque_max)
     csv2.append(brisque_min)
 
-    print("Time Elapsed for ltp, noise, BRISQUE: ",
-          time.perf_counter() - start_time)
+    print("Time Elapsed for ltp, noise, BRISQUE: ", time.perf_counter() - start_time)
     csv_out.send(csv2)  # Send list to output of Pipe
 
 
@@ -750,8 +751,7 @@ def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
             if frame_count == 1:
                 # set MAX and MIN
                 # temporal flickering
-                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
-                    cv_frame)
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame)
             else:
                 # temporal flickering
                 flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
@@ -771,8 +771,7 @@ def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
 
 def AGH_getResutls(path):
     # run the script to calculate all metrics
-    os.system("bash mitsuScript.sh " + "./"
-              + path + " ./" + "mitsuLinuxMultithread")
+    os.system("bash mitsuScript.sh " + "./" + path + " ./" + "mitsuLinuxMultithread")
     csv_out = []
     row = []
     listOfTA, listOfFlicker, listOfBlockiness, listOfLetterbox, listOfPillarbox = (
@@ -868,21 +867,19 @@ def p4_AGH_tool(path, csv_out):
     ta = []
     blockloss = []
     start_time = time.perf_counter()
-    for video in os.listdir(path):
-        shutil.copy(path + "/" + video, "tmp")
-        agh_list = AGH_getResutls("tmp/")
-        # print("AGH_LIST is below:\n", agh_list)
-        os.remove("tmp/" + video)
-        flicker.append(agh_list[0])
-        block.append(agh_list[1])
-        blur.append(agh_list[2])
-        exposure.append(agh_list[3])
-        contrast.append(agh_list[4])
-        noise.append(agh_list[5])
-        ta.append(agh_list[6])
-        blockloss.append(agh_list[7])
+    shutil.copy(path, "tmp")
+    agh_list = AGH_getResutls("tmp/")
+    # print("AGH_LIST is below:\n", agh_list)
     shutil.rmtree("tmp/")
     shutil.rmtree(".TA_metrics_01/")
+    flicker.append(agh_list[0])
+    block.append(agh_list[1])
+    blur.append(agh_list[2])
+    exposure.append(agh_list[3])
+    contrast.append(agh_list[4])
+    noise.append(agh_list[5])
+    ta.append(agh_list[6])
+    blockloss.append(agh_list[7])
 
     norm_flickering = quickNormalize(np.average(flicker), 8, 0)
     norm_blockiness = quickNormalize(np.average(block), 3570, 0)
@@ -915,8 +912,6 @@ def p4_AGH_tool(path, csv_out):
 
 def p5_si_ti(path, csv_out):
     start_time = time.perf_counter()
-    for video in os.listdir(path):
-        path = path + "/" + video
     csv5 = []
     siti_metrics = sitiExtraction.videoSiTi(path)
     si = siti_metrics[0]
@@ -929,10 +924,9 @@ def p5_si_ti(path, csv_out):
 
 def quickNormalize(oldValue, oldMax, oldMin):
     newMin, newMax = 0, 1
-    newValue = ((oldValue - oldMin) / (oldMax - oldMin)) * \
-        (newMax - newMin) + newMin
+    newValue = ((oldValue - oldMin) / (oldMax - oldMin)) * (newMax - newMin) + newMin
     return newValue
 
 
 if __name__ == "__main__":
-    getFrames("live-frames")
+    getFrames("raw-frames")
