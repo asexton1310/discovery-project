@@ -87,6 +87,32 @@ def extractFrameLoop(input_path, output_path, sample_rate):
         frames, step = extractFrames(in_filepath, sample_rate)
         saveFrames(frames, step, fname, output_dir)
 
+def sampleFrameLoop(input_path, output_path):
+    """
+    parse all videos within a folder and sample some frames
+    input_path  -  path to folder containing input videos
+    output_path -  path to folder that will contain subfolder containing output frames
+    """
+
+    for filename in os.listdir(input_path):
+        fname, ext = os.path.splitext(filename) # split filename from extension
+        in_filepath = input_path + filename
+        output_dir = output_path + fname + "-frames" 
+
+        # make folder inside output_path with video file's name to hold extracted frames
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+
+        print(f"{filename} extract frames")
+
+        if ext == ".yuv":
+            import re
+            full_fps = fname.split("_")[-2]
+            fps = re.sub("[^0-9]","",full_fps)
+            sampleYUV(in_filepath, f"{output_dir}/", framerate=fps)
+        else:
+            sampleStream(in_filepath, f"{output_dir}/")
+
 def extractFrames(in_filepath, sample_rate):
     # uses openCV to extract frames from a video
     # in_filepath -  path to input video or webcam
@@ -209,7 +235,7 @@ def getLiveFrames(path, batch_size):
                                          n=batch_size,
                                          ignore_directories=True)
 
-    # Create, configure, and start the observer                                     
+    # Create, configure, and start the observer
     observer = Observer()
     observer.schedule(event_handler, path)
     observer.start()
@@ -221,12 +247,46 @@ def getLiveFrames(path, batch_size):
         observer.stop()
     observer.join()
 
-def sampleStream(in_file, output_path):
+def sampleYUV(in_file, output_path, resolution="3840x2160", framerate="30"):
+    """
+    uses python wrapper for ffmpeg commandline to sample frames from a 
+    live h264 stream ( or other input video ). frames will be stored as 
+    PNGs in a folder for later steps in processing chain to read
+
+    in_file        - input udp address of the h264 stream, or path to input video
+    output_path    - path to folder that will contain output pngs
+
+    Livestream testing procedure:
+        get another computer with ffmpeg cmd-line tool installed
+        identify ip address of computer receiving the stream and 
+        identify open udp port of computer receiving the stream
+        run this function on computer reciving the stream with udp address as
+        in_file and a chosen output folder as output_path
+        Example:  sampleStream('udp://10.0.0.30:9090', './temp/')
+        Next:
+        run following command on second computer (the one streaming to receiver)
+        ffmpeg -list_devices true -f dshow -i dummy     
+        look for webcam device name in results of above command then run:
+        ffmpeg -f dshow -i video="__DEVICENAMEHERE__" -vcodec libx264 -f h264 udp://__IPADDRESS__:__UDPPORT__
+        Example of above: ffmpeg -f dshow -i video="Integrated Webcam" -vcodec libx264 -f h264 udp://10.0.0.30:9090
+    """
+    
+    (
+        ffmpeg
+        .input(in_file, f="rawvideo", vcodec="rawvideo", s=resolution, r=framerate, pix_fmt="yuv420p")
+        .filter('fps')
+        .output(f'{output_path}frame-%d.png')
+        .run()
+    )
+
+def sampleStream(in_file, output_path, output_type):
     # uses python wrapper for ffmpeg commandline to sample frames from a 
     # live h264 stream ( or other input video ). frames will be stored as 
     # PNGs in a folder for later steps in processing chain to read
     # in_file        - input udp address of the h264 stream, or path to input video
     # output_path    - path to folder that will contain output pngs
+    # output_type    - string indicating whether to take mp4 or png samples
+    #                  value of "mp4" or "MP4" will result in mp4s, anything else is png
 
     # Livestream testing procedure:
     # get another computer with ffmpeg cmd-line tool installed
@@ -242,13 +302,17 @@ def sampleStream(in_file, output_path):
     #   ffmpeg -f dshow -i video="__DEVICENAMEHERE__" -vcodec libx264 -f h264 udp://__IPADDRESS__:__UDPPORT__
     # Example of above: ffmpeg -f dshow -i video="Integrated Webcam" -vcodec libx264 -f h264 udp://10.0.0.30:9090
     
-    decoder = (
-        ffmpeg
-        .input(in_file)
-        .filter('fps')
-        .output(f'{output_path}frame-%d.png')
-        .run()
-    )
+    if str(output_type).lower() == "mp4":
+        os.system(f"ffmpeg -i {in_file} -c copy -flags +global_header \
+            -f segment -segment_time {5} -segment_format_options movflags=+faststart -reset_timestamps 1 {output_path}sample-%d.mp4")
+    else:
+        (
+            ffmpeg
+            .input(in_file)
+            .filter('fps')
+            .output(f'{output_path}frame-%d.png')
+            .run() 
+        )
 
 if __name__ == "__main__":
     #extractFrameLoop('./distortedVideos/','./distortedFrames/', 2)
@@ -260,4 +324,4 @@ if __name__ == "__main__":
 
     # saveFrames(frames, step, ts, "./distortedFrames/")
     #getLiveFrames("./raw-frames/")
-    sampleStream('./live-test/B311.mp4', './raw-frames/')
+    sampleStream('./live-test/B311.mp4', './raw-frames/', "png")
