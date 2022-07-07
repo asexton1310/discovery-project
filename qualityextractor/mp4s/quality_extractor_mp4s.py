@@ -1,3 +1,10 @@
+import os
+import sys
+
+script_dir = os.path.dirname( __file__ )
+mymodule_dir = os.path.join( script_dir, '..', '..', )
+sys.path.append( mymodule_dir )
+
 import block as Blockiness
 import blurv3 as Blurriness
 import contrastAndColorMetric as CCMetric
@@ -5,8 +12,9 @@ import noisev1 as Noise
 import nrqe_metrics as NRQEmetrics
 import frameExtraction
 import sitiExtraction
-import os.path
+import LTPExtractionMetric
 import shutil
+from Calculate_AGH_Metrics import extractMetricsFromAGHTool
 from pathlib import Path
 import cv2
 import brisque
@@ -14,7 +22,6 @@ import numpy as np
 import time
 import csv
 import multiprocessing as mp
-import LTPExtractionMetric
 import logging
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
@@ -318,73 +325,6 @@ def buildDeploymentCSV(path):
     print("frame_list length: ", len(frame_list))
     # identify labels for CSV file
     csv_label = [
-        "video_name",
-        "block_avg",
-        "block_max",
-        "block_min",
-        "blur_avg",
-        "blur_max",
-        "blur_min",
-        "avg_color1",
-        "max_color1",
-        "min_color1",
-        "avg_color2",
-        "max_color2",
-        "min_color2",
-        "avg_color3",
-        "max_color3",
-        "min_color3",
-        "avg_color4",
-        "max_color4",
-        "min_color4",
-        "avg_color5",
-        "max_color5",
-        "min_color5",
-        "avg_color6",
-        "max_color6",
-        "min_color6",
-        "avg_color7",
-        "max_color7",
-        "min_color7",
-        "avg_color8",
-        "max_color8",
-        "min_color8",
-        "avg_contrast1",
-        "max_contrast1",
-        "min_contrast1",
-        "avg_contrast1",
-        "max_contrast2",
-        "min_contrast2",
-        "avg_contrast3",
-        "max_contrast3",
-        "min_contrast3",
-        "avg_contrast4",
-        "max_contrast4",
-        "min_contrast4",
-        "avg_contrast5",
-        "max_contrast5",
-        "min_contrast5",
-        "avg_contrast6",
-        "max_contrast6",
-        "min_contrast6",
-        "avg_contrast7",
-        "max_contrast7",
-        "min_contrast7",
-        "avg_contrast8",
-        "max_contrast8",
-        "min_contrast8",
-        "avg_contrast9",
-        "max_contrast9",
-        "min_contrast9",
-        "avg_noise",
-        "max_noise",
-        "min_noise",
-        "avg_brisque",
-        "max_brisque",
-        "min_brisque",
-    ]
-    # for testing integration ONLY
-    int_csv_label = [
         "video",
         "avg_blockiness",
         "max_blockiness",
@@ -392,57 +332,12 @@ def buildDeploymentCSV(path):
         "avg_blur",
         "max_blur",
         "min_blur",
-        "avg_contrast1",
-        "max_contrast1",
-        "min_contrast1",
-        "avg_contrast1",
-        "max_contrast2",
-        "min_contrast2",
-        "avg_contrast3",
-        "max_contrast3",
-        "min_contrast3",
-        "avg_contrast4",
-        "max_contrast4",
-        "min_contrast4",
-        "avg_contrast5",
-        "max_contrast5",
-        "min_contrast5",
-        "avg_contrast6",
-        "max_contrast6",
-        "min_contrast6",
-        "avg_contrast7",
-        "max_contrast7",
-        "min_contrast7",
-        "avg_contrast8",
-        "max_contrast8",
-        "min_contrast8",
-        "avg_contrast9",
-        "max_contrast9",
-        "min_contrast9",
-        "avg_color1",
-        "max_color1",
-        "min_color1",
-        "avg_color2",
-        "max_color2",
-        "min_color2",
-        "avg_color3",
-        "max_color3",
-        "min_color3",
-        "avg_color4",
-        "max_color4",
-        "min_color4",
-        "avg_color5",
-        "max_color5",
-        "min_color5",
-        "avg_color6",
-        "max_color6",
-        "min_color6",
-        "avg_color7",
-        "max_color7",
-        "min_color7",
-        "avg_color8",
-        "max_color8",
-        "min_color8",
+        "avg_contrast",
+        "max_contrast",
+        "min_contrast",
+        "avg_color",
+        "max_color",
+        "min_color",
         "avg_ltp",
         "max_ltp",
         "min_ltp",
@@ -453,30 +348,22 @@ def buildDeploymentCSV(path):
         "max_brisque",
         "min_brisque",
         # "avg_flicker",
-        "flicker_avg_AGH",
-        "flicker_max_AGH",
-        "block_avg_AGH",
-        "block_max_AGH",
-        "block_min_AGH",
-        "blur_avg_AGH",
-        "blur_max_AGH",
-        "blur_min_AGH",
-        "exposure_avg_AGH",
-        "exposure_max_AGH",
-        "exposure_min_AGH",
-        "contrast_avg_AGH",
-        "contrast_max_AGH",
-        "contrast_min_AGH",
-        "noise_avg_AGH",
-        "noise_max_AGH",
-        "noise_min_AGH",
-        "temporal_avg_AGH",
-        "blockloss_avg_AGH",
-        "blockloss_max_AGH",
-        "blockloss_min_AGH",
-        "si_avg",
-        "ti_avg",
+        "avg_flickering_AGH",
+        "avg_blockiness_AGH",
+        "avg_letterBox_agh", 										
+        "avg_pillarBox_agh",
+        "avg_blockloss_agh",
+        "avg_blur_agh",
+        "avg_blackout_agh",
+        "avg_freezing_agh",
+        "avg_exposure_agh",
+        "avg_contrast_agh",
+        "avg_interlace_agh",
+        "avg_noise_agh",
+        "avg_si_agh",
+        "avg_ti_agh",
     ]
+    
     start_time = time.perf_counter()
     vidname = sample_num
     csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
@@ -537,7 +424,7 @@ def buildDeploymentCSV(path):
     ) as csvfile:
         metric_writer = csv.writer(csvfile, delimiter=",")
         # metric_writer.writerows()
-        metric_writer.writerow(int_csv_label[1:])
+        metric_writer.writerow(csv_label[1:])
         metric_writer.writerow(csv_out[1:])
     print("Total Time Elapsed: ", time.perf_counter() - start_time)
 
@@ -585,61 +472,95 @@ def flickeringLoop(framesfolder_path, vidname, frame_list, csv_out):
 
 def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     # lists of each frame's metrics
-    blockiness_list = []
-    blurriness_list = []
-    contrast_list = [[], [], [], [], [], [], [], [], []]
-    contrast_prev = [[], [], [], [], [], [], [], [], []]
-    color_list = [[], [], [], [], [], [], [], []]
-    color_prev = [[], [], [], [], [], [], [], []]
+    blockiness_sum = 0
+    blockiness_prev = 0
+    blurriness_sum = 0
+    blurriness_prev = 0
+    contrast_sum = 0
+    contrast_prev = 0
+    color_sum = 0
+    color_prev = 0
 
     #    noise_list = []
     csv1 = []  # This will be the list I am sending to the output of the Pipe
     # list of each frame's pixel values
     frame_prev = -1
+    frame_count = 0
     start_time = time.perf_counter()
     for frame in frame_list:
         # full_path = framesfolder_path + frame
         # some metrics require frame to already be read with opencv
         cv_frame = frame
         # some metrics require an array of frame data. So build it
-        # frame_data.append(cv_frame)
+        frame_count += 1
         if np.mean(frame_prev) != np.mean(cv_frame):
-            blockiness_list.append(Blockiness.block(cv_frame))
-            blurriness_list.append(Blurriness.sobel_blur(cv_frame))
-            # calculateGD returns a list with 9 values
-            contrast_metrics = CCMetric.calculateGD(cv_frame)
-            for i in range(len(contrast_metrics)):
-                contrast_list[i].append(contrast_metrics[i])
+            blockiness_prev = blockiness_val = Blockiness.block(cv_frame)
+            blockiness_sum += blockiness_val
 
-            # calculateCS returns a list with 8 values
-            color_metrics = CCMetric.calculateCS(cv_frame)
-            for i in range(len(color_metrics)):
-                color_list[i].append(color_metrics[i])
-            #    noise_list.append(Noise.noise(cv_frame))
+            blurriness_prev = blurriness_val = Blurriness.sobel_blur(cv_frame)
+            blurriness_sum += blurriness_val
+            
+            contrast_prev = contrast_val = CCMetric.calculateGD(cv_frame)
+            contrast_sum += contrast_val
+
+            color_prev = color_val = CCMetric.calculateCS(cv_frame)
+            color_sum += color_val
+
             frame_prev = cv_frame
-            contrast_prev = contrast_metrics
-            color_prev = color_metrics
+
+            if frame_count == 1:
+                # set MAX and MIN
+                blockiness_max = blockiness_min = blockiness_val
+                blurriness_max = blurriness_min = blurriness_val
+                contrast_max = contrast_min = contrast_val
+                color_max = color_min = color_val
+            else:
+                # BLOCKINESS
+                if blockiness_val > blockiness_max:
+                    blockiness_max = blockiness_val
+                elif blockiness_val < blockiness_min:
+                    blockiness_min = blockiness_val
+                # BLURRINESS
+                if blurriness_val > blurriness_max:
+                    blurriness_max = blurriness_val
+                elif blurriness_val < blurriness_min:
+                    blurriness_min = blurriness_val
+                # CONTRAST
+                if contrast_val > contrast_max:
+                    contrast_max = contrast_val
+                elif contrast_val < contrast_min:
+                    contrast_min = contrast_val
+                # COLOR
+                if color_val > color_max:
+                    color_max = color_val
+                elif color_val < color_min:
+                    color_min = color_val
         else:
-            blockiness_list.append(blockiness_list[len(blockiness_list) - 1])
-            blurriness_list.append(blurriness_list[len(blurriness_list) - 1])
-            for i in range(len(contrast_prev)):
-                contrast_list[i].append(contrast_prev[i])
-            for i in range(len(color_prev)):
-                color_list[i].append(color_prev[i])
+            blockiness_sum += blockiness_prev
+            blurriness_sum += blurriness_prev
+            contrast_sum += contrast_prev
+            color_sum += color_prev
         #    noise_list.append(noise_list[len(noise_list)-1])
 
     # VIDEO NAME
     csv1.append(vidname)
+
     # BLOCKINESS
-    addFrameStats(blockiness_list, csv1)
+    csv1.append(blockiness_sum / frame_count)
+    csv1.append(blockiness_max)
+    csv1.append(blockiness_min)
     # BLURRINESS
-    addFrameStats(blurriness_list, csv1)
+    csv1.append(blurriness_sum / frame_count)
+    csv1.append(blurriness_max)
+    csv1.append(blurriness_min)
     # CONTRAST
-    for i in range(len(contrast_list)):
-        addFrameStats(contrast_list[i], csv1)
+    csv1.append(contrast_sum / frame_count)
+    csv1.append(contrast_max)
+    csv1.append(contrast_min)
     # COLOR
-    for i in range(len(color_list)):
-        addFrameStats(color_list[i], csv1)
+    csv1.append(color_sum / frame_count)
+    csv1.append(color_max)
+    csv1.append(color_min)
     # NOISE
     #    addFrameStats(noise_list, csv1)
     print(
@@ -770,143 +691,27 @@ def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
 
 
 def AGH_getResutls(path):
-    # run the script to calculate all metrics
-    os.system("bash mitsuScript.sh " + "./" + path + " ./" + "mitsuLinuxMultithread")
-    csv_out = []
-    row = []
-    listOfTA, listOfFlicker, listOfBlockiness, listOfLetterbox, listOfPillarbox = (
-        [],
-        [],
-        [],
-        [],
-        [],
-    )
-    listOfBlockloss, listOfBlur, listOfBlackout, listOfFreezing, listOfExposure = (
-        [],
-        [],
-        [],
-        [],
-        [],
-    )
-    listOfContrast, listOfInterlace, listOfNoise, listOfSlice = [], [], [], []
+    print("getresultspath: ",path)
+    if "win" in sys.platform:
+        # assume windows
+        inputScript = os.path.abspath("../../Calculate_AGH_Metrics/mitsuWin64.exe")
+    else:
+        #assume linux
+        inputScript = "mitsuLinuxMultithread"
+    csv_out = extractMetricsFromAGHTool.extractMetrics(path, inputScript)
+    # final metric is slicing, remove it with pop() since this is broken
+    csv_out.pop()
 
-    # extract Metrics Data from ouput file
-    with open("./.TA_metrics_01/results-all_01.csv") as fileObj:
-        readerCSV = csv.reader(fileObj)
-        for item in readerCSV:
-            row.append(item)
-    for i in range(2, len(row)):
-        singleRow = row[i]
-        for item in singleRow:
-            singleFlicker = item.split("\t")[15]
-            singleFlickerToFloat = float("".join(singleFlicker))
-            if singleFlickerToFloat != -1:
-                listOfFlicker.append(singleFlickerToFloat)
-            singleBlockiness = item.split("\t")[1]
-            listOfBlockiness.append(float("".join(singleBlockiness)))
-            singleLetterBox = item.split("\t")[3]
-            listOfLetterbox.append(float("".join(singleLetterBox)))
-            singlePillarbox = item.split("\t")[4]
-            listOfPillarbox.append(float("".join(singlePillarbox)))
-            singleBlockloss = item.split("\t")[5]
-            listOfBlockloss.append(float("".join(singleBlockloss)))
-            singleBlur = item.split("\t")[6]
-            listOfBlur.append(float("".join(singleBlur)))
-            singleTA = item.split("\t")[7]
-            listOfTA.append(float("".join(singleTA)))
-            singleBlackout = item.split("\t")[8]
-            listOfBlackout.append(float("".join(singleBlackout)))
-            singleFreezing = item.split("\t")[9]
-            listOfFreezing.append(float("".join(singleFreezing)))
-            singleExposure = item.split("\t")[10]
-            listOfExposure.append(float("".join(singleExposure)))
-            singleContrast = item.split("\t")[11]
-            listOfContrast.append(float("".join(singleContrast)))
-            singleInterlace = item.split("\t")[12]
-            listOfInterlace.append(float("".join(singleInterlace)))
-            singleNoise = item.split("\t")[13]
-            listOfNoise.append(float("".join(singleNoise)))
-            singleSlice = item.split("\t")[14]
-            listOfSlice.append(float("".join(singleSlice)))
-
-    listOfFlicker = listOfFlicker[0]
-    listOfBlockiness = listOfBlockiness[0]
-    listOfBlur = listOfBlur[0]
-    listOfExposure = listOfExposure[0]
-    listOfContrast = listOfContrast[0]
-    listOfNoise = listOfNoise[0]
-    listOfTA = listOfTA[0]
-    listOfBlockloss = listOfBlockloss[0]
-    # creating csv list
-    csv_out = [
-        listOfFlicker,
-        listOfBlockiness,
-        listOfBlur,
-        listOfExposure,
-        listOfContrast,
-        listOfNoise,
-        listOfTA,
-        listOfBlockloss,
-    ]
     return csv_out
 
 
 def p4_AGH_tool(path, csv_out):
-    if not os.path.isdir("tmp"):
-        os.mkdir("tmp")
-    else:
-        shutil.rmtree("tmp/")
-        os.mkdir("tmp")
-    csv4 = []
-    flicker = []
-    block = []
-    blur = []
-    exposure = []
-    contrast = []
-    noise = []
-    ta = []
-    blockloss = []
+    absolute_path = os.path.abspath(path)
+
     start_time = time.perf_counter()
-    shutil.copy(path, "tmp")
-    agh_list = AGH_getResutls("tmp/")
-    # print("AGH_LIST is below:\n", agh_list)
-    shutil.rmtree("tmp/")
-    shutil.rmtree(".TA_metrics_01/")
-    flicker.append(agh_list[0])
-    block.append(agh_list[1])
-    blur.append(agh_list[2])
-    exposure.append(agh_list[3])
-    contrast.append(agh_list[4])
-    noise.append(agh_list[5])
-    ta.append(agh_list[6])
-    blockloss.append(agh_list[7])
+    agh_list = AGH_getResutls(absolute_path)
 
-    norm_flickering = quickNormalize(np.average(flicker), 8, 0)
-    norm_blockiness = quickNormalize(np.average(block), 3570, 0)
-    norm_blockloss = quickNormalize(np.average(blockloss), 200, 0)
-    norm_blur = quickNormalize(np.average(blur), 70, 0)
-    norm_exposure = quickNormalize(np.average(exposure), 255, 0)
-    norm_contrast = quickNormalize(np.average(contrast), 120, 0)
-    norm_noise = quickNormalize(np.average(noise), 30, 0)
-    numberOfDecimal = 5
-    flicker = round(norm_flickering, numberOfDecimal)
-    block = round(norm_blockiness, numberOfDecimal)
-    blockloss = round(norm_blockloss, numberOfDecimal)
-    blur = round(norm_blur, numberOfDecimal)
-    exposure = round(norm_exposure, numberOfDecimal)
-    contrast = round(norm_contrast, numberOfDecimal)
-    noise = round(norm_noise, numberOfDecimal)
-
-    csv4.append(np.average(flicker))
-    csv4.append(np.max(flicker))
-    addFrameStats(block, csv4)
-    addFrameStats(blur, csv4)
-    addFrameStats(exposure, csv4)
-    addFrameStats(contrast, csv4)
-    addFrameStats(noise, csv4)
-    csv4.append(np.average(ta))
-    addFrameStats(blockloss, csv4)
-    csv_out.send(csv4)  # Send list to output of Pipe
+    csv_out.send(agh_list)  # Send list to output of Pipe
     print("Time Elapsed for AGH Metrics: ", time.perf_counter() - start_time)
 
 

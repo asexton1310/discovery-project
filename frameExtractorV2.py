@@ -317,7 +317,7 @@ def sampleStream(in_file, output_path, output_type):
 
     if str(output_type).lower() == "mp4":
         os.system(f"ffmpeg -i {in_file} -c copy -flags +global_header \
-            -f segment -segment_time {5} -segment_format_options movflags=+faststart -reset_timestamps 1 {output_path}sample-%d.mp4")
+            -f segment -segment_time {5} -segment_format_options movflags=+faststart -reset_timestamps 1 {output_path}video-%d.mp4")
     else:
         (
             ffmpeg
@@ -374,4 +374,5 @@ if __name__ == "__main__":
     #sampleStream('input.mp4', 'C:/Users/fireb/PycharmProjects/extract_metrics/rawframes/', "png")
     # udp://10.0.0.30:9090
     #sampleSend('input.mp4', 'C:/Users/fireb/PycharmProjects/extract_metrics/rawframes/')
-    mp3('A026.mp4')
+    #mp3('A026.mp4')
+    sampleStream("udp://10.0.0.30:9090", "./raw-frames/", "mp4")

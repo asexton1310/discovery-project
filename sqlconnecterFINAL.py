@@ -24,7 +24,6 @@ class Stream:
                 "framerate": None,
                 "resolution": None,
                 "avg_blockiness": None,
-                "avg_blockiness": None,
                 "max_blockiness": None,
                 "min_blockiness": None,
                 "avg_blur": None,
@@ -101,7 +100,7 @@ class Stream:
             metrics = metrics + "WHERE status_on = " + str(self.status) + " AND stream_id = '" + str(self.stream_id) + "' AND location_id = '" + str(self.location_id)+"'"
             cursor = self.connectionDB.cursor()
             sql = "UPDATE final_tblv2 SET " + str(metrics)
-            print(str(sql))
+            #print(str(sql))
             cursor.execute(sql)
             self.connectionDB.commit()      
             cursor.close()
@@ -165,7 +164,8 @@ class Stream:
              datapointsstr = ""
              for metric in self.datapoints:
                 datapointsstr = datapointsstr + str(self.datapoints[metric]) + " | "
-             return title + " | " + str(self.status) + " | " + str(self.stream_id) + " | " + str(self.location_id) + " | " + datapointsstr
+             return title + " | " + str(self.status) + " | " + str(self.stream_id) + " | " \
+                + str(self.location_id) + " | " + datapointsstr + " ||\n " + str(self.logstring)
 
          except Exception as e:
              return "data return error" + e

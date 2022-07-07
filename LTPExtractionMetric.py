@@ -21,7 +21,8 @@ def scaleOutput(number):
 def getLTPimage(image):
     scalePercent = 3
     listOfImgLTP = []
-    images = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+    images = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # images = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
     height = int(images.shape[0] * (scalePercent/100))
     width = int(images.shape[1] * (scalePercent/100))
     gray_image = cv2.resize(images, (width, height))
@@ -56,8 +57,8 @@ def getLTPimage(image):
 
 
 if __name__ == "__main__":
-    imageTest = "014-o.png"
-    imageTest2 = '014-d.png'
+    imageTest = cv2.imread("014-o.png")
+    imageTest2 = cv2.imread('014-d.png')
     print("Frame 1: ", getLTPimage(imageTest))
     print("Frame 2: ", getLTPimage(imageTest2))
 
