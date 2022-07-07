@@ -61,10 +61,11 @@ set /p HEIGHT= < heightTempFile
 set /p FPS= < fpsTempFile
 :: Calculate the FPS value:
 :: Multiply by 1000 not to lose precision when performing integer arithmetic
-for /f "tokens=1,2 delims=/ " %%a in ("%FPS%") do set /a NUM=%%a*1000&set DEN=%%b
+for /f "tokens=1,2 delims=/ " %%a in ("%FPS%") do set /a NUM=%%a&set DEN=%%b
+set /a REM=NUM%%DEN*100/DEN
 set /a FPS="NUM/DEN"
 :: Inser the dot in the result
-set FPS=%FPS:~0,2%.%FPS:~2,2%
+set FPS=%FPS:~0,2%.%REM:~0,2%
 del /Q widthTempFile
 del /Q heightTempFile
 del /Q fpsTempFile

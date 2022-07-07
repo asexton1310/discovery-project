@@ -694,7 +694,7 @@ def AGH_getResutls(path):
     print("getresultspath: ",path)
     if "win" in sys.platform:
         # assume windows
-        inputScript = os.path.abspath("../../Calculate_AGH_Metrics/mitsuWin64.exe")
+        inputScript = os.path.abspath("Calculate_AGH_Metrics/mitsuWin64.exe")
     else:
         #assume linux
         inputScript = "mitsuLinuxMultithread"
