@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import os
 import sys
 
@@ -13,6 +14,7 @@ import nrqe_metrics as NRQEmetrics
 import frameExtraction
 import sitiExtraction
 import LTPExtractionMetric
+import bitstream as BSmetrics
 import shutil
 from Calculate_AGH_Metrics import extractMetricsFromAGHTool
 from pathlib import Path
@@ -348,8 +350,11 @@ def buildDeploymentCSV(path):
         "max_brisque",
         "min_brisque",
         # "avg_flicker",
-        "avg_flickering_AGH",
-        "avg_blockiness_AGH",
+        "bitrate",
+        "framerate",
+        "resolution",
+        "avg_flickering_agh",
+        "avg_blockiness_agh",
         "avg_letterBox_agh", 										
         "avg_pillarBox_agh",
         "avg_blockloss_agh",
@@ -368,7 +373,7 @@ def buildDeploymentCSV(path):
     vidname = sample_num
     csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
     csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-    # csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
+    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
     csv_in4, csv_out4 = mp.Pipe()  # p4_AGH Pipe (AGH TOOL metrics)
     csv_in5, csv_out5 = mp.Pipe()  # p5_siti Pipe (SI, TI TOOL metrics)
     # Process p1 (noise, blur, block, contrast)
@@ -381,11 +386,11 @@ def buildDeploymentCSV(path):
         target=p2MetricsLoop,
         args=(path + "/", vidname + ".mp4", frame_list, csv_in2),
     )
-    # Process p3 (brisque)
-    # p3 = mp.Process(
-    #    target=p3MetricsLoop,
-    #    args=(path + "/", vidname + ".mp4", frame_list, csv_in3),
-    # )
+    # Process p3 (bitrate, framerate, resolution)
+    p3 = mp.Process(
+        target=p3_bitstream_metrics,
+        args=(path, csv_in3),
+    )
     # Process p4, AGH metrics
     p4_AGH = mp.Process(target=p4_AGH_tool, args=(path, csv_in4))
     # Process p5, SI, TI metrics
@@ -393,30 +398,30 @@ def buildDeploymentCSV(path):
     # Start the processes
     p1.start()
     p2.start()
-    # p3.start()
+    p3.start()
     p4_AGH.start()
     p5_siti.start()
     # retreive Pipe output of csv lists
     csv_out1 = csv_out1.recv()  # return list of csv values for p1 metrics
     csv_out2 = csv_out2.recv()  # return list of csv values for p2 metrics
-    # csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
+    csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
     csv_out4 = csv_out4.recv()  # return list of csv values for p4 metrics (AGH)
     csv_out5 = csv_out5.recv()  # return list of csv values for p5 metrics(SI, TI)
     p1.join()
     p2.join()
-    # p3.join()
+    p3.join()
     p4_AGH.join()
     p5_siti.join()
     # kill processes
     p1.terminate()
     p2.terminate()
-    # p3.terminate()
+    p3.terminate()
     p4_AGH.terminate()
     p5_siti.terminate()
     # Acheive total CSV list with appropriate outputs
     csv_out = (
-        csv_out1 + csv_out2 + csv_out4 + csv_out5
-    )  # csv_out3 + csv_out4 + csv_out5
+        csv_out1 + csv_out2 + csv_out3 + csv_out4 + csv_out5
+    )
     # Write to individual CSV
     csv_prefix = "video"
     with open(
@@ -725,6 +730,13 @@ def p5_si_ti(path, csv_out):
     csv5.append(ti)
     print("Time Elapsed for SI TI metrics: ", time.perf_counter() - start_time)
     csv_out.send(csv5)
+
+def p3_bitstream_metrics(path, csv_out):
+    start_time = time.perf_counter()
+    bitrate, framerate, res = BSmetrics.bitstreamMetrics(path)
+
+    csv_out.send([bitrate, framerate, res])  # Send list to output of Pipe
+    print("Time Elapsed for bitstream Metrics: ", time.perf_counter() - start_time)
 
 
 def quickNormalize(oldValue, oldMax, oldMin):

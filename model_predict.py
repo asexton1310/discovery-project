@@ -17,7 +17,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         https://github.com/gorakhargosh/watchdog/
     """
 
-    def __init__(self, model_loc=None, mysql_connection=None, **kwargs):
+    def __init__(self, model_loc=None, unused_metrics=None, mysql_connection=None, **kwargs):
         super().__init__(**kwargs)
         
         # load model used to make predictions
@@ -26,6 +26,9 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
                                                         "SpearmanCorrelation":custom_metrics.SpearmanCorrelation})
         # Check its architecture
         print(self.model.summary())
+
+        # store the metrics we won't use for future reference
+        self.unused_metrics = unused_metrics
 
         """ set the database connection for future updates 
             TODO figure out how to set synchronize the stream_id based on some inherent fact of the stream
@@ -67,8 +70,11 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         print(f"Target File: {target_file}")
        
         # read the target csv file
-        df = pd.read_csv(target_file)
-        print("df.head: ", df.head() )
+        orig_df = pd.read_csv(target_file)
+        print("orig_df.head: ", orig_df.head() )
+
+        #drop any metrics that are not used by this model
+        df = orig_df.drop(columns=self.unused_metrics, axis=1)
 
         # make the predictions
         quality_estimate = self.model.predict(df.iloc[0:1]) # quality_estimate in form [[numpyFloat]]
@@ -76,14 +82,20 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         print(quality_estimate)
 
         # update the database
-        metric_labels = list(df.columns)
+        metric_labels = list(orig_df.columns)
         for metric in metric_labels:
-            self.db_stream.datapoints[metric] = df.loc[0,metric]
+            self.db_stream.datapoints[metric] = orig_df.loc[0,metric]
 
         self.db_stream.datapoints["quality_estimate"] = float(quality_estimate[0][0])    # minor reformat of quality_estimate to float for DB compatibility
         #print(self.db_stream.datapoints)
-
         self.db_stream.injectData()
+
+        # update the database's logstring
+        datapointsstr = ""
+        for metric in self.db_stream.datapoints:
+            datapointsstr += str(self.db_stream.datapoints[metric]) + ";"
+        self.db_stream.updateLogString(datapointsstr + "|")
+        self.db_stream.injectLogString()
 
         # delete the csv file now that we have made predictions
         os.remove(target_file)
@@ -95,7 +107,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         self.db_stream.offline()
         self.db_stream.closeDBstream()
 
-def getMetrics(path, model_path):
+def getMetrics(path, model_path, unused_metrics):
     # Function that repeatedly polls a directory looking for
     # new csvs (extracted metrics) and uses an observer to
     # make predictions and delete them when the next csv is 
@@ -104,6 +116,9 @@ def getMetrics(path, model_path):
     # https://github.com/gorakhargosh/watchdog
     #
     # path - folder to watch for new csvs
+    # model_path - path to the model we want to use to make predictions
+    # unused_metrics - a list of string labels corresponding to the metrics
+    #                  that the desired model does not use
 
     # set up logging for debugging
     logging.basicConfig(level=logging.INFO,
@@ -112,8 +127,8 @@ def getMetrics(path, model_path):
     
     # set up database connection
     try:
-        connectionDB = mysql.connector.connect(user='disctest', password='test', database='discoveryproject',
-                              host='localhost',
+        connectionDB = mysql.connector.connect(user='#', password='#', database='video_analysis_db',
+                              host='#',
                        )
         print("Connection String Opened successfully")
     except Exception as e:
@@ -124,6 +139,7 @@ def getMetrics(path, model_path):
     event_handler = NewMetricEventHandler(patterns=['*.csv'],
                                          ignore_directories=True,
                                          model_loc=model_path,
+                                         unused_metrics=unused_metrics,
                                          mysql_connection=connectionDB)
     # Create, configure, and start the observer                                     
     observer = Observer()
@@ -141,4 +157,4 @@ def getMetrics(path, model_path):
 
 if __name__ == "__main__":
     #getMetrics("./quality-metrics/", model_path="./savedModels/feedfw-nn-2022-06-09_18-30-34/")
-    getMetrics("./quality-metrics/", model_path="./savedModels/live-ls-nrqe-2022-07-02_21-40-51/")
+    getMetrics("./quality-metrics/", model_path="./savedModels/live-ls-nrqe-2022-07-02_21-40-51/", unused_metrics=["bitrate", "framerate", "resolution"])

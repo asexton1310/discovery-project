@@ -125,7 +125,7 @@ class Stream:
             cursor.execute(sql, values)
             self.connectionDB.commit()
             cursor.close()
-            print("Stream ", self.stream_id, "Location ", self.location_id, " Offline")
+            print("Stream ", self.stream_id, "Location ", self.location_id, " Logstring updated")
         except Exception as e:
             raise Exception("There was an error injecting logstring: ", e)
     
