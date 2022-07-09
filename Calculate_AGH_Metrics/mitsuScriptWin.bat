@@ -5,11 +5,11 @@ if [%2]==[] goto USAGE
 echo.
 echo MITSU Fast Video Processing Script
 echo ******************************************************************
-echo.
+::echo.
 :: Notice the user what is neccessary to use the script
-echo CAUTION: In order to use the script, make sure that "ffmpeg" and "ffprobe" are in your PATH environment variable!
-echo CAUTION: When giving the path to the folder with video files, remember to end it with the '\' sign!
-echo CAUTION: If you are using the files or paths containing spaces please enclose them between the double qutation marks!
+::echo CAUTION: In order to use the script, make sure that "ffmpeg" and "ffprobe" are in your PATH environment variable!
+::echo CAUTION: When giving the path to the folder with video files, remember to end it with the '\' sign!
+::echo CAUTION: If you are using the files or paths containing spaces please enclose them between the double qutation marks!
 echo.
 :: Create the directory for storing the results
 set DIR="mitsu"
@@ -76,7 +76,7 @@ echo.
 :: Convert the video into the yuv format an store the ffmpeg log file
 set YUV=%FILENAME%.yuv
 set LOGFILE=ffmpeglog-%FILENAME%-%DATE%-%TIME:~1,1%-%TIME:~3,2%-%TIME:~6,2%.txt
-echo Uncompressing the video using the ffmpeg...
+echo Uncompressing the video using ffmpeg...
 ffmpeg -i %VIDEOFILE% -pix_fmt yuv420p -hide_banner %YUV% > %LOGFILE% 2>&1
 echo Done!
 echo Output of the ffmpeg stored in the %LOGFILE%
@@ -91,9 +91,9 @@ echo.
 findstr /C:"Calculation time:" %OUTPUT%
 findstr /C:"milliseconds per frame" %OUTPUT%
 echo.
-move /Y metricsResultsCSV.txt %RESULTS% > NUL
-echo Results saved in the %RESULTS% file
-echo.
+::move /Y metricsResultsCSV.txt %RESULTS% > NUL
+::echo Results saved in the %RESULTS% file
+::echo.
 :: Remove the output.txt file
 del /Q %OUTPUT%
 :: Remove the YUV file
