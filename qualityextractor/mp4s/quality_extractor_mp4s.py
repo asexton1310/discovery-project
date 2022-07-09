@@ -40,7 +40,8 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         # for testing purposes, log every event
-        logging.info(event)
+        # logging.info(event)
+        pass
 
     def on_moved(self, event):
         self.on_created(event)
