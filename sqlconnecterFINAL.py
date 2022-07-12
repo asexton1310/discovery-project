@@ -90,7 +90,6 @@ class Stream:
     #update datapoints in SQL
     def injectData(self):
         try:
-            cursor = self.connectionDB.cursor()
             metrics = ""
             for metric in self.datapoints:
                 if (self.datapoints[metric] != None):
