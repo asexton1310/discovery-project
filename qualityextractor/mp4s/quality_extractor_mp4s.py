@@ -67,7 +67,8 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
         buildDeploymentCSV(target_file)
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
         # delete the previous mp4 video
-        os.remove(target_file)
+        shutil.move(target_file, f"finishedSamples/{os.path.basename(target_file)}")
+        #os.remove(target_file)
         print("delete sucessful")
 
 
