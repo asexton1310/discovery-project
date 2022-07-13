@@ -1,10 +1,3 @@
-import numpy as np
-from siti_tools.siti import SiTiCalculator
-from typing import Generator
-import av
-from matplotlib import image
-from os import path
-
 """
 Reference: https://github.com/VQEG/siti-tools
 MIT License
@@ -18,6 +11,14 @@ INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PA
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
+
+import numpy as np
+from siti_tools.siti import SiTiCalculator
+from typing import Generator
+import av
+from matplotlib import image
+from os import path
 
 
 def singleFrameSiTi(targetFrame, prevFrame):
