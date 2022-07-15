@@ -77,7 +77,7 @@ echo.
 set YUV=%FILENAME%.yuv
 set LOGFILE=ffmpeglog-%FILENAME%-%DATE%-%TIME:~1,1%-%TIME:~3,2%-%TIME:~6,2%.txt
 echo Uncompressing the video using ffmpeg...
-ffmpeg -i %VIDEOFILE% -pix_fmt yuv420p -hide_banner %YUV% > %LOGFILE% 2>&1
+ffmpeg -i %VIDEOFILE% -pix_fmt yuv420p -hide_banner %YUV% -y > %LOGFILE% 2>&1
 echo Done!
 echo Output of the ffmpeg stored in the %LOGFILE%
 echo.
