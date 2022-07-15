@@ -704,7 +704,7 @@ def AGH_getResutls(path):
         inputScript = os.path.abspath("Calculate_AGH_Metrics/mitsuWin64.exe")
     else:
         #assume linux
-        inputScript = "mitsuLinuxMultithread"
+        inputScript = "Calculate_AGH_Metrics/mitsuLinux"
     csv_out = extractMetricsFromAGHTool.extractMetrics(path, inputScript)
     # final metric is slicing, remove it with pop() since this is broken
     csv_out.pop()
