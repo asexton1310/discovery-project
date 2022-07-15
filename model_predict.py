@@ -47,7 +47,8 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         #for testing purposes, log every event
-        logging.info(event)
+        #logging.info(event)
+        pass
     
     def on_created(self, event):
         # when a new csv file is created, process the previous one
@@ -71,7 +72,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
        
         # read the target csv file
         orig_df = pd.read_csv(target_file)
-        print("orig_df.head: ", orig_df.head() )
+        print("orig_df.head: \n", orig_df.head())
 
         #drop any metrics that are not used by this model
         df = orig_df.drop(columns=self.unused_metrics, axis=1)

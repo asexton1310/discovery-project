@@ -63,8 +63,8 @@ class Stream:
               }
  
             self.logstring = ""
-            print("connection obj: ", self.connectionDB, "/n CLASS initialization data:")
-            print(self.toString())
+            #print("connection obj: ", self.connectionDB, "/n CLASS initialization data:")
+            #print(self.toString())
         except Exception as e:
             raise Exception("There was an error initializing the class: ", e)
     
@@ -90,7 +90,6 @@ class Stream:
     #update datapoints in SQL
     def injectData(self):
         try:
-            cursor = self.connectionDB.cursor()
             metrics = ""
             for metric in self.datapoints:
                 if (self.datapoints[metric] != None):
@@ -160,12 +159,13 @@ class Stream:
     
     def toString(self):
          try:
-             title = "status | stream_id | location_id | data1 - data(n) || logstring\n\n"
+             title = "status | stream_id | location_id | data1 | data2 - data(n)\n\n"
              datapointsstr = ""
-             for metric in self.datapoints:
-                datapointsstr = datapointsstr + str(self.datapoints[metric]) + " | "
+             datapointsstr += str(self.datapoints["bitrate"]) + " | " + str(self.datapoints["framerate"]) + " - " + str(self.datapoints["quality_estimate"])
+             #for metric in self.datapoints:
+             #   datapointsstr = datapointsstr + str(self.datapoints[metric]) + " | "
              return title + " | " + str(self.status) + " | " + str(self.stream_id) + " | " \
-                + str(self.location_id) + " | " + datapointsstr + " ||\n " + str(self.logstring)
+                + str(self.location_id) + " | " + datapointsstr
 
          except Exception as e:
              return "data return error" + e

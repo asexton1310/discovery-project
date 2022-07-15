@@ -346,7 +346,7 @@ def sampleSend(in_file, output_path):
 
     for in_file, mime_types in zip(in_file, mime_types):
         file_metadata = {
-            'name': in_file,
+            'name': f"{time.time()}{in_file}",
             'parents': [folder_id]
         }
 

@@ -1,13 +1,16 @@
+"""
+Reference: https://doi.org/10.1016/j.jvcir.2020.102797.
+No-reference quality metric for contrast-distorted image based on gradient domain and HSV space,
+Journal of Visual Communication and Image Representation,
+By Wenjing Lyu, Wei Lu, Ming Ma,
+"""
+
 from skimage import filters
 from skimage.feature import local_binary_pattern
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import preprocessing
 import cv2
-
-# This function calculate contrast distortion effectively 
-# on gray-scale denoted as GD
-
 
 def calculateGD(frameInput):
     scalePercent = 5

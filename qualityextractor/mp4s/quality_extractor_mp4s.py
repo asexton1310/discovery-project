@@ -40,7 +40,8 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
 
     def on_any_event(self, event):
         # for testing purposes, log every event
-        logging.info(event)
+        # logging.info(event)
+        pass
 
     def on_moved(self, event):
         self.on_created(event)
@@ -66,7 +67,8 @@ class NewFrameEventHandler(PatternMatchingEventHandler):
         buildDeploymentCSV(target_file)
         ####  CODE TO RUN PER-FRAME GOES HERE  ####
         # delete the previous mp4 video
-        os.remove(target_file)
+        shutil.move(target_file, f"finishedSamples/{os.path.basename(target_file)}")
+        #os.remove(target_file)
         print("delete sucessful")
 
 
@@ -702,7 +704,7 @@ def AGH_getResutls(path):
         inputScript = os.path.abspath("Calculate_AGH_Metrics/mitsuWin64.exe")
     else:
         #assume linux
-        inputScript = "mitsuLinuxMultithread"
+        inputScript = "Calculate_AGH_Metrics/mitsuLinux"
     csv_out = extractMetricsFromAGHTool.extractMetrics(path, inputScript)
     # final metric is slicing, remove it with pop() since this is broken
     csv_out.pop()

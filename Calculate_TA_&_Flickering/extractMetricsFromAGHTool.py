@@ -1,10 +1,16 @@
+
+"""
+Reference: https://www.researchgate.net/publication/318506730_Modeling_of_Quality_of_Experience_in_No-Reference_Model
+Modeling of Quality of Experience in No-Reference Model. Journal of Telecommunications and Information Technology
+By Nawała, Jakub & Janowski, Lucjan & Leszczuk, Mikołaj.
+"""
+
+
 from operator import ne
 import os
 import csv
 import numpy as np 
 
-#This tool is based on Paper Modeling of quality of experience in no-reference model 
-#Reference URL: https://www.researchgate.net/publication/318506730_Modeling_of_Quality_of_Experience_in_No-Reference_Model
 
 ######Intruction########:
 #Use the link below to download Single executable based on OS.

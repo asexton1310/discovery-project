@@ -1,3 +1,18 @@
+"""
+Reference: https://github.com/VQEG/siti-tools
+MIT License
+siti_tools, Copyright (c) 2021-2022 Werner Robitza, Lukas Krasula
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
+
 import numpy as np
 from siti_tools.siti import SiTiCalculator
 from typing import Generator
@@ -5,30 +20,30 @@ import av
 from matplotlib import image
 from os import path
 
-#This tool developed by Werner Robitza and Lukas Krasula 
-#Reference: https://github.com/VQEG/siti-tools
 
 def singleFrameSiTi(targetFrame, prevFrame):
-    #Function calculate the spatial information and temporal information
-    #Require input is a single frame and prior frame in np array format
+    # Function calculate the spatial information and temporal information
+    # Require input is a single frame and prior frame in np array format
     siValue = SiTiCalculator.si(targetFrame)
     tiValue = SiTiCalculator.ti(targetFrame, prevFrame)
-    
+
     return siValue, tiValue
 
+
 def calculateSiTi(setOfFrame):
-    #Function calculate the spatial information and temporal information
-    #Require input as a set of Frame's name
-	setOfTi=[]
-	setOfSi=[]
-	previousFrame= None
-	for frame in setOfFrame:
-		firstFrame = image.imread(frame)
-		siValue, tiValue = singleFrameSiTi(firstFrame, previousFrame)
-		previousFrame = firstFrame
-		setOfSi.append(siValue)
-		setOfTi.append(tiValue)
-	return setOfSi, setOfTi
+    # Function calculate the spatial information and temporal information
+    # Require input as a set of Frame's name
+    setOfTi = []
+    setOfSi = []
+    previousFrame = None
+    for frame in setOfFrame:
+        firstFrame = image.imread(frame)
+        siValue, tiValue = singleFrameSiTi(firstFrame, previousFrame)
+        previousFrame = firstFrame
+        setOfSi.append(siValue)
+        setOfTi.append(tiValue)
+    return setOfSi, setOfTi
+
 
 def read_container(input_file: str) -> Generator[np.ndarray, None, None]:
     """
@@ -55,9 +70,10 @@ def read_container(input_file: str) -> Generator[np.ndarray, None, None]:
     if "yuv" in path.splitext(input_file)[1]:
         import re
         full_fps = input_file.split("_")[-2]
-        fps = re.sub("[^0-9]","",full_fps)
-        
-        container = av.open(input_file, format="rawvideo", options={"vcodec":"rawvideo","video_size":"3840x2160","framerate":fps,"pix_fmt":"yuv420p"})
+        fps = re.sub("[^0-9]", "", full_fps)
+
+        container = av.open(input_file, format="rawvideo", options={
+                            "vcodec": "rawvideo", "video_size": "3840x2160", "framerate": fps, "pix_fmt": "yuv420p"})
     else:
         container = av.open(input_file)
 
@@ -69,7 +85,8 @@ def read_container(input_file: str) -> Generator[np.ndarray, None, None]:
         # correct way to do that -- the return values seem correct for a white/black
         # checkerboard pattern
         if "yuv" not in str(frame.format.name):
-            raise RuntimeError(f"Decoding not yet possible for format {frame.format.name}! Only YUV is supported.")
+            raise RuntimeError(
+                f"Decoding not yet possible for format {frame.format.name}! Only YUV is supported.")
 
         if "p10" in str(frame.format.name):
             datatype = np.uint16
@@ -80,14 +97,15 @@ def read_container(input_file: str) -> Generator[np.ndarray, None, None]:
         else:
             datatype = np.uint8
             bytes_per_pixel = 1
-  
+
         try:
             plane = frame.planes[0]
             total_line_size = abs(plane.line_size)
             useful_line_size = plane.width * bytes_per_pixel
             arr = np.frombuffer(plane, np.uint8)
             if total_line_size != useful_line_size:
-                arr = arr.reshape(-1, total_line_size)[:, 0:useful_line_size].reshape(-1)
+                arr = arr.reshape(-1,
+                                  total_line_size)[:, 0:useful_line_size].reshape(-1)
             arr.view(np.dtype(datatype))
             yield (
                 # The code commented out below does the "standard" conversion of YUV
@@ -104,17 +122,18 @@ def read_container(input_file: str) -> Generator[np.ndarray, None, None]:
                 f"Cannot decode frame. Have you specified the bit depth correctly? Original error: {e}"
             )
 
+
 def videoSiTi(inputVid):
     previous_frame_data = None
     frame_generator = read_container(inputVid)
     frame_cnt = 1
 
     si_sum = ti_sum = 0
-    calc = SiTiCalculator(color_range="full",bit_depth=10)
+    calc = SiTiCalculator(color_range="full", bit_depth=10)
     for frame_data in frame_generator:
         si_value = calc.si(frame_data)
         ti_value = calc.ti(frame_data, previous_frame_data)
-        
+
         si_sum += si_value
 
         if ti_value is None:
@@ -126,11 +145,12 @@ def videoSiTi(inputVid):
         previous_frame_data = frame_data
     avg_si = si_sum / frame_cnt
     avg_ti = ti_sum / frame_cnt
-    
-    #normalize si, ti, by dividing by 255 since output ranges are 0-255
+
+    # normalize si, ti, by dividing by 255 since output ranges are 0-255
     return([avg_si / 255, avg_ti / 255])
 
+
 if __name__ == "__main__":
-	#setOfFrame = ["098.png", "104.png"]
-	#print(calculateSiTi(setOfFrame))
+    #setOfFrame = ["098.png", "104.png"]
+    # print(calculateSiTi(setOfFrame))
     print(videoSiTi("./inputVideos/A026.mp4"))

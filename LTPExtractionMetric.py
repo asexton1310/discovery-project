@@ -1,11 +1,15 @@
+"""
+Reference: https://ieeexplore.ieee.org/abstract/document/7498959
+No-reference image quality assessment based on statistics of Local Ternary Pattern
+By P. G. Freitas, W. Y. L. Akamine and M. C. Q. Farias,
+"""
 
-# LTP algorithm based on paper by Pedro Garcia Freitas
-# Accesible at https://ieeexplore.ieee.org/abstract/document/7498959
 
 from skimage import filters
 import numpy as np
 from sklearn.preprocessing import normalize
 import cv2
+
 
 def scaleOutput(number):
     old_value = number
@@ -61,4 +65,3 @@ if __name__ == "__main__":
     imageTest2 = cv2.imread('014-d.png')
     print("Frame 1: ", getLTPimage(imageTest))
     print("Frame 2: ", getLTPimage(imageTest2))
-
