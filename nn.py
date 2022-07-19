@@ -35,6 +35,7 @@ def fitModel(model, X_train, y_train):
 def saveModel(model, losses, eval_results, save_folder, dataset_used):
     # timestamp to uniquely identify the model
     ts = datetime.datetime.now( ).strftime("%Y-%m-%d_%H-%M-%S")
+    dataset_used = os.path.basename(dataset_used)
     # Save the entire model as a SavedModel.
     savefile = f"{save_folder}/{dataset_used}-{ts}/"
     if not os.path.isdir(savefile):
@@ -93,12 +94,15 @@ def kFoldCV(modelFunction, trainDF, valDF, k):
     print('results: ', results)
     print('Test loss, test mae, test PLCC, test SROCC: ', np.divide(results, 10))
 
-dataset_file = 'live-nrqe.csv'
+dataset_file = 'nn-csvs/older-data/live-ls-nrqe-wk7.csv'
 df = pd.read_csv(dataset_file)
 
 # split dataset into inputs and targets ( metrics/MOS )
 X_df = df.drop('mos', axis=1)
 y_df = df['mos']
+
+# Remove any metrics we don't want to use in training
+#X_df.drop(['avg_color', 'max_color', 'min_color', 'avg_brisque', 'max_brisque', 'min_brisque'], axis=1, inplace=True)
 
 # Do K-fold cross validation
 #kFoldCV(buildModel, X_df.drop('video',axis=1), y_df, 10)
