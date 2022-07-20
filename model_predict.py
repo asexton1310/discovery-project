@@ -75,7 +75,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         print("orig_df.head: \n", orig_df.head())
 
         #drop any metrics that are not used by this model
-        df = orig_df.drop(columns=self.unused_metrics, axis=1)
+        df = orig_df.drop(columns=self.unused_metrics, axis=1, errors='ignore')
 
         # make the predictions
         quality_estimate = self.model.predict(df.iloc[0:1]) # quality_estimate in form [[numpyFloat]]
@@ -158,4 +158,5 @@ def getMetrics(path, model_path, unused_metrics):
 
 if __name__ == "__main__":
     #getMetrics("./quality-metrics/", model_path="./savedModels/feedfw-nn-2022-06-09_18-30-34/")
-    getMetrics("./quality-metrics/", model_path="./savedModels/live-ls-nrqe-2022-07-02_21-40-51/", unused_metrics=["bitrate", "framerate", "resolution"])
+    getMetrics("./quality-metrics/", model_path="./savedModels/live-ls-nrqe-final-2022-07-19_22-49-29/", 
+                unused_metrics=['avg_color', 'max_color', 'min_color', 'avg_brisque', 'max_brisque', 'min_brisque'])
