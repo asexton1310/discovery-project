@@ -373,13 +373,13 @@ def buildDeploymentCSV(path):
 
     start_time = time.perf_counter()
     vidname = sample_num
-    csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
-    csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
-    csv_in4, csv_out4 = mp.Pipe()  # p4_AGH Pipe (AGH TOOL metrics)
-    csv_in5, csv_out5 = mp.Pipe()  # p5_siti Pipe (SI, TI TOOL metrics)
-    csv_in6, csv_out6 = mp.Pipe()  # p6_siti Pipe (SI, TI TOOL metrics)
-    # Process p1 (noise, blur, block)
+    csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (blur, block)
+    csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color, contrast)
+    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque, ltp, noise)
+    csv_in4, csv_out4 = mp.Pipe()  # p4 Pipe (bitstream metrics)
+    csv_in5, csv_out5 = mp.Pipe()  # p5 Pipe (AGH TOOL metrics)
+    csv_in6, csv_out6 = mp.Pipe()  # p6 Pipe (SI, TI TOOL metrics)
+    # Process p1 (blur, block)
     p1 = mp.Process(
         target=p1MetricsLoop,
         args=(path + "/", vidname + ".mp4", frame_list, csv_in1),
@@ -399,9 +399,9 @@ def buildDeploymentCSV(path):
         target=p4_bitstream_metrics,
         args=(path, csv_in4),
     )
-    # Process p4, AGH metrics
+    # Process p5, AGH metrics
     p5_AGH = mp.Process(target=p5_AGH_tool, args=(path, csv_in5))
-    # Process p5, SI, TI metrics
+    # Process p6, SI, TI metrics
     p6_siti = mp.Process(target=p6_si_ti, args=(path, csv_in6))
     # Start the processes
     p1.start()
