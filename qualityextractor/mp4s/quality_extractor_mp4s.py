@@ -19,7 +19,7 @@ import shutil
 from Calculate_AGH_Metrics import extractMetricsFromAGHTool
 from pathlib import Path
 import cv2
-import brisque
+#import brisque
 import numpy as np
 import time
 import csv
@@ -106,222 +106,6 @@ def getFrames(path):
     observer.join()
 
 
-def buildTrainingCSV():
-    input_path = "./live-test/"
-    output_path = "./live-frames/"
-    sample_rate = 1000  # samples at video's fps if samplerate above fps
-
-    # identify labels for CSV file
-    csv_label = [
-        "video_name",
-        "block_avg",
-        "block_max",
-        "block_min",
-        "blur_avg",
-        "blur_max",
-        "blur_min",
-        "avg_color1",
-        "max_color1",
-        "min_color1",
-        "avg_color2",
-        "max_color2",
-        "min_color2",
-        "avg_color3",
-        "max_color3",
-        "min_color3",
-        "avg_color4",
-        "max_color4",
-        "min_color4",
-        "avg_color5",
-        "max_color5",
-        "min_color5",
-        "avg_color6",
-        "max_color6",
-        "min_color6",
-        "avg_color7",
-        "max_color7",
-        "min_color7",
-        "avg_color8",
-        "max_color8",
-        "min_color8",
-        "avg_contrast1",
-        "max_contrast1",
-        "min_contrast1",
-        "avg_contrast1",
-        "max_contrast2",
-        "min_contrast2",
-        "avg_contrast3",
-        "max_contrast3",
-        "min_contrast3",
-        "avg_contrast4",
-        "max_contrast4",
-        "min_contrast4",
-        "avg_contrast5",
-        "max_contrast5",
-        "min_contrast5",
-        "avg_contrast6",
-        "max_contrast6",
-        "min_contrast6",
-        "avg_contrast7",
-        "max_contrast7",
-        "min_contrast7",
-        "avg_contrast8",
-        "max_contrast8",
-        "min_contrast8",
-        "avg_contrast9",
-        "max_contrast9",
-        "min_contrast9",
-        "avg_noise",
-        "max_noise",
-        "min_noise",
-        "avg_brisque",
-        "max_brisque",
-        "min_brisque",
-    ]
-    # for testing integration ONLY
-    int_csv_label = [
-        "video",
-        "avg_blockiness",
-        "max_blockiness",
-        "min_blockiness",
-        "avg_blur",
-        "max_blur",
-        "min_blur",
-        "avg_contrast1",
-        "max_contrast1",
-        "min_contrast1",
-        "avg_contrast1",
-        "max_contrast2",
-        "min_contrast2",
-        "avg_contrast3",
-        "max_contrast3",
-        "min_contrast3",
-        "avg_contrast4",
-        "max_contrast4",
-        "min_contrast4",
-        "avg_contrast5",
-        "max_contrast5",
-        "min_contrast5",
-        "avg_contrast6",
-        "max_contrast6",
-        "min_contrast6",
-        "avg_contrast7",
-        "max_contrast7",
-        "min_contrast7",
-        "avg_contrast8",
-        "max_contrast8",
-        "min_contrast8",
-        "avg_contrast9",
-        "max_contrast9",
-        "min_contrast9",
-        "avg_color1",
-        "max_color1",
-        "min_color1",
-        "avg_color2",
-        "max_color2",
-        "min_color2",
-        "avg_color3",
-        "max_color3",
-        "min_color3",
-        "avg_color4",
-        "max_color4",
-        "min_color4",
-        "avg_color5",
-        "max_color5",
-        "min_color5",
-        "avg_color6",
-        "max_color6",
-        "min_color6",
-        "avg_color7",
-        "max_color7",
-        "min_color7",
-        "avg_color8",
-        "max_color8",
-        "min_color8",
-        "avg_ltp",
-        "max_ltp",
-        "min_ltp",
-        "avg_noise",
-        "max_noise",
-        "min_noise",
-        "avg_brisque",
-        "max_brisque",
-        "min_brisque",
-        "avg_flicker",
-    ]
-
-    path2file = "live-nrqe2.csv"
-
-    path = Path(path2file)
-    if path.is_file():
-        print("File already exists")
-    else:
-        with open(path2file, "a", newline="") as csv_file:
-            metric_writer = csv.writer(csv_file, delimiter=",")
-            metric_writer.writerow(csv_label)
-    frameExtraction.extractFrameLoop(input_path, output_path, sample_rate)
-    print("Done extracting frames")
-    start_time = time.perf_counter()
-
-    for frame_folder in os.listdir(output_path):
-        prefix, _ = frame_folder.split("-")
-        csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
-        csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-        csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
-        # Process p1 (noise, blur, block, contrast)
-        p1 = mp.Process(
-            target=p1MetricsLoop,
-            args=(
-                output_path + frame_folder + "/",
-                prefix + ".mp4",
-                csv_in1,
-            ),
-        )
-        # Process p2 (color)
-        p2 = mp.Process(
-            target=p2MetricsLoop,
-            args=(
-                output_path + frame_folder + "/",
-                prefix + ".mp4",
-                csv_in2,
-            ),
-        )
-        # Process p3 (brisque)
-        p3 = mp.Process(
-            target=p3MetricsLoop,
-            args=(
-                output_path + frame_folder + "/",
-                prefix + ".mp4",
-                csv_in3,
-            ),
-        )
-        # Start the processes
-        p1.start()
-        p2.start()
-        p3.start()
-        # retreive Pipe output of csv lists
-        csv_out1 = csv_out1.recv()  # return list of csv values for p1 metrics
-        csv_out2 = csv_out2.recv()  # return list of csv values for p2 metrics
-        csv_out3 = csv_out3.recv()  # return list of csv values for p3 metrics
-        p1.join()
-        p2.join()
-        p3.join()
-        # kill processes
-        p1.terminate()
-        p2.terminate()
-        p3.terminate()
-        # Acheive total CSV list with appropriate outputs
-        csv_out = csv_out1 + csv_out2 + csv_out3
-        # WRITE TO CSV
-        if path.is_file():
-            with open(path2file, "a", newline="") as csvfile:
-                metric_writer = csv.writer(csvfile, delimiter=",")
-                metric_writer.writerow(csv_out)
-        else:
-            print(f"Error: {path2file} does not exist.")
-    print("Total Time Elapsed: ", time.perf_counter() - start_time)
-
-
 def buildDeploymentCSV(path):
     prefix, sample_num = path.rsplit("-", 1)
     sample_num, postfix = sample_num.rsplit(".", 1)
@@ -339,18 +123,18 @@ def buildDeploymentCSV(path):
         "avg_contrast",
         "max_contrast",
         "min_contrast",
-        "avg_color",
-        "max_color",
-        "min_color",
+        # "avg_color",
+        # "max_color",
+        # "min_color",
         "avg_ltp",
         "max_ltp",
         "min_ltp",
         "avg_noise",
         "max_noise",
         "min_noise",
-        "avg_brisque",
-        "max_brisque",
-        "min_brisque",
+        # "avg_brisque",
+        # "max_brisque",
+        # "min_brisque",
         # "avg_flicker",
         "bitrate",
         "framerate",
@@ -373,17 +157,17 @@ def buildDeploymentCSV(path):
     
     start_time = time.perf_counter()
     vidname = sample_num
-    csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (noise, blur, block, contrast)
-    csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (color)
-    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (brisque)
-    csv_in4, csv_out4 = mp.Pipe()  # p4_AGH Pipe (AGH TOOL metrics)
-    csv_in5, csv_out5 = mp.Pipe()  # p5_siti Pipe (SI, TI TOOL metrics)
-    # Process p1 (noise, blur, block, contrast)
+    csv_in1, csv_out1 = mp.Pipe()  # p1 Pipe (block, blur, contrast, color)
+    csv_in2, csv_out2 = mp.Pipe()  # p2 Pipe (ltp, noise, brisque)
+    csv_in3, csv_out3 = mp.Pipe()  # p3 Pipe (bitstream metrics)
+    csv_in4, csv_out4 = mp.Pipe()  # p4 Pipe (AGH TOOL metrics)
+    csv_in5, csv_out5 = mp.Pipe()  # p5 Pipe (SI, TI TOOL metrics)
+    # Process p1 (block, blur, contrast, color)
     p1 = mp.Process(
         target=p1MetricsLoop,
         args=(path + "/", vidname + ".mp4", frame_list, csv_in1),
     )
-    # Process p2 (color)
+    # Process p2 (ltp, noise, brisque)
     p2 = mp.Process(
         target=p2MetricsLoop,
         args=(path + "/", vidname + ".mp4", frame_list, csv_in2),
@@ -454,29 +238,6 @@ def addFrameStats(input_list, out_list):
     out_list.append(np.min(input_list))
 
 
-def flickeringLoop(framesfolder_path, vidname, frame_list, csv_out):
-    csv2 = []
-    # flickering_time = time.perf_counter()
-    frame_list = os.listdir(framesfolder_path)
-    frame_list.sort()
-    frame_data = []
-    for frame in frame_list:
-        full_path = framesfolder_path + frame
-        # some metrics require frame to already be read with opencv
-        cv_frame = cv2.imread(full_path)
-        # some metrics require an array of frame data. So build it
-        frame_data.append(cv_frame)
-    # FLICKERING
-    frame_list = os.listdir(framesfolder_path)
-    frame_list.sort()
-    # print(f"frame data: {frame_list}")
-    np_frame_array = np.array(frame_data)
-    # flickering_time = time.perf_counter()
-    csv2.append(NRQEmetrics.temporalFlickering(np_frame_array))
-    # print("Time Elapsed for flickering: ", time.perf_counter() - flickering_time)
-    csv_out.send(csv2)
-
-
 def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     # lists of each frame's metrics
     blockiness_sum = 0
@@ -485,10 +246,9 @@ def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     blurriness_prev = 0
     contrast_sum = 0
     contrast_prev = 0
-    color_sum = 0
-    color_prev = 0
+    #color_sum = 0
+    #color_prev = 0
 
-    #    noise_list = []
     csv1 = []  # This will be the list I am sending to the output of the Pipe
     # list of each frame's pixel values
     frame_prev = -1
@@ -506,12 +266,12 @@ def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
 
             blurriness_prev = blurriness_val = Blurriness.sobel_blur(cv_frame)
             blurriness_sum += blurriness_val
-            
+
             contrast_prev = contrast_val = CCMetric.calculateGD(cv_frame)
             contrast_sum += contrast_val
 
-            color_prev = color_val = CCMetric.calculateCS(cv_frame)
-            color_sum += color_val
+            #color_prev = color_val = CCMetric.calculateCS(cv_frame)
+            #color_sum += color_val
 
             frame_prev = cv_frame
 
@@ -520,7 +280,7 @@ def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
                 blockiness_max = blockiness_min = blockiness_val
                 blurriness_max = blurriness_min = blurriness_val
                 contrast_max = contrast_min = contrast_val
-                color_max = color_min = color_val
+                #color_max = color_min = color_val
             else:
                 # BLOCKINESS
                 if blockiness_val > blockiness_max:
@@ -538,16 +298,15 @@ def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
                 elif contrast_val < contrast_min:
                     contrast_min = contrast_val
                 # COLOR
-                if color_val > color_max:
-                    color_max = color_val
-                elif color_val < color_min:
-                    color_min = color_val
+                #if color_val > color_max:
+                #    color_max = color_val
+                #elif color_val < color_min:
+                #    color_min = color_val
         else:
             blockiness_sum += blockiness_prev
             blurriness_sum += blurriness_prev
             contrast_sum += contrast_prev
-            color_sum += color_prev
-        #    noise_list.append(noise_list[len(noise_list)-1])
+            #color_sum += color_prev
 
     # VIDEO NAME
     csv1.append(vidname)
@@ -565,28 +324,26 @@ def p1MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     csv1.append(contrast_max)
     csv1.append(contrast_min)
     # COLOR
-    csv1.append(color_sum / frame_count)
-    csv1.append(color_max)
-    csv1.append(color_min)
-    # NOISE
-    #    addFrameStats(noise_list, csv1)
+    # csv1.append(color_sum / frame_count)
+    # csv1.append(color_max)
+    # csv1.append(color_min)
     print(
-        "Time Elapsed for block, blur, contrast, color: ",
+        "Time Elapsed for block, blur, contrast: ",
         time.perf_counter() - start_time,
     )
     csv_out.send(csv1)  # Send list to output of Pipe
 
 
 def p2MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
-    brisq = brisque.BRISQUE()
+    # brisq = brisque.BRISQUE()
     # lists of each frame's metrics
-    brisque_sum = 0
+    # brisque_sum = 0
     ltp_sum = 0
     noise_sum = 0
 
     ltp_prev = 0
     noise_prev = 0
-    brisque_prev = 0
+    # brisque_prev = 0
     csv2 = []  # This will be the list I am sending to the output of the Pipe
     # list of each frame's pixel values
     frame_prev = -1
@@ -606,16 +363,16 @@ def p2MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
 
             # BRISQUE
             # if frame is a solid color, brisque will return error, as expected
-            if np.mean(cv_frame) != 0:
+            #if np.mean(cv_frame) != 0:
                 # BRISQUE output is 0-100. Easy to normalize now
-                brisque_prev = brisque_val = brisq.get_score(cv_frame) / 100
-                brisque_sum += brisque_val
-
+                # brisque_prev = brisque_val = brisq.get_score(cv_frame) / 100
+                # brisque_sum += brisque_val
+                
             if frame_count == 1:
                 # set MAX and MIN
                 ltp_max = ltp_min = ltp_val
                 noise_max = noise_min = noise_val
-                brisque_max = brisque_min = brisque_val
+                # brisque_max = brisque_min = brisque_val
             else:
                 # LTP
                 if ltp_val > ltp_max:
@@ -628,14 +385,14 @@ def p2MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
                 elif noise_val < noise_min:
                     noise_min = noise_val
                 # BRISQUE
-                if brisque_val > brisque_max:
-                    brisque_max = brisque_val
-                elif brisque_val < brisque_min:
-                    brisque_min = brisque_val
+                # if brisque_val > brisque_max:
+                    # brisque_max = brisque_val
+                # elif brisque_val < brisque_min:
+                    # brisque_min = brisque_val
         else:
             ltp_sum += ltp_prev
             noise_sum += noise_prev
-            brisque_sum += brisque_prev
+            # brisque_sum += brisque_prev
 
     # LTP
     csv2.append(ltp_sum / frame_count)
@@ -648,15 +405,16 @@ def p2MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     csv2.append(noise_min)
 
     # BRISQUE
-    csv2.append(brisque_sum / frame_count)
-    csv2.append(brisque_max)
-    csv2.append(brisque_min)
+    # csv2.append(brisque_sum / frame_count)
+    # csv2.append(brisque_max)
+    # csv2.append(brisque_min)
 
-    print("Time Elapsed for ltp, noise, BRISQUE: ", time.perf_counter() - start_time)
+    print("Time Elapsed for ltp, noise: ",
+          time.perf_counter() - start_time)
     csv_out.send(csv2)  # Send list to output of Pipe
 
 
-def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
+def p3MetricsLoop_flickering(framesfolder_path, vidname, frame_list, csv_out):
     flick_sum = 0
 
     flick_prev = 0
@@ -679,7 +437,8 @@ def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
             if frame_count == 1:
                 # set MAX and MIN
                 # temporal flickering
-                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(cv_frame)
+                flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
+                    cv_frame)
             else:
                 # temporal flickering
                 flick_ratio, prev_temporal, prev_msds = NRQEmetrics.flickRatio(
@@ -696,9 +455,16 @@ def p3MetricsLoop(framesfolder_path, vidname, frame_list, csv_out):
     print("Time Elapsed for flickering: ", time.perf_counter() - start_time)
     csv_out.send(csv3)  # Send list to output of Pipe
 
+def p3_bitstream_metrics(path, csv_out):
+    start_time = time.perf_counter()
+    bitrate, framerate, res = BSmetrics.bitstreamMetrics(path)
+
+    csv_out.send([bitrate, framerate, res])  # Send list to output of Pipe
+    print("Time Elapsed for bitstream Metrics: ", time.perf_counter() - start_time)
+
 
 def AGH_getResutls(path):
-    print("getresultspath: ",path)
+    print("getresultspath: ", path)
     if "win" in sys.platform:
         # assume windows
         inputScript = os.path.abspath("Calculate_AGH_Metrics/mitsuWin64.exe")
@@ -732,13 +498,6 @@ def p5_si_ti(path, csv_out):
     csv5.append(ti)
     print("Time Elapsed for SI TI metrics: ", time.perf_counter() - start_time)
     csv_out.send(csv5)
-
-def p3_bitstream_metrics(path, csv_out):
-    start_time = time.perf_counter()
-    bitrate, framerate, res = BSmetrics.bitstreamMetrics(path)
-
-    csv_out.send([bitrate, framerate, res])  # Send list to output of Pipe
-    print("Time Elapsed for bitstream Metrics: ", time.perf_counter() - start_time)
 
 
 def quickNormalize(oldValue, oldMax, oldMin):

@@ -159,4 +159,4 @@ def getMetrics(path, model_path, unused_metrics):
 if __name__ == "__main__":
     #getMetrics("./quality-metrics/", model_path="./savedModels/feedfw-nn-2022-06-09_18-30-34/")
     getMetrics("./quality-metrics/", model_path="./savedModels/live-ls-nrqe-final-2022-07-19_22-49-29/", 
-                unused_metrics=['avg_color', 'max_color', 'min_color', 'avg_brisque', 'max_brisque', 'min_brisque'])
+                unused_metrics=['avg_color', 'max_color', 'min_color', 'avg_brisque', 'max_brisque', 'min_brisque', 'resolution'])
