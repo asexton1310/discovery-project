@@ -28,9 +28,17 @@ def bitstreamMetrics(in_file):
 
     numerator, denominator = framerate.split("/")
     framerate = int(numerator) / int(denominator)
+    norm_framerate = quickNormalize(framerate, 30, 25)
 
     bitrate = int(bitrate)
-    return bitrate, framerate, resolution
+    norm_bitrate = quickNormalize(bitrate, 2985984000, 2488320000)
+    return norm_bitrate, norm_framerate, resolution
+
+def quickNormalize(oldValue, oldMax, oldMin):
+    newMin, newMax = 0, 1
+    newValue = ((oldValue - oldMin) / (oldMax - oldMin)) * \
+        (newMax - newMin) + newMin
+    return newValue
 
 def main():
     from ffmpeg_streaming import FFProbe, ffprobe

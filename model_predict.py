@@ -86,6 +86,12 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         metric_labels = list(orig_df.columns)
         for metric in metric_labels:
             self.db_stream.datapoints[metric] = orig_df.loc[0,metric]
+        # restore the original values for bitrate and framerate since these metrics are stream properties
+        # rather than measures of distortion. so we want to store the original values
+        norm_bitrate = self.db_stream.datapoints['bitrate']
+        norm_framerate = self.db_stream.datapoints['framerate']
+        self.db_stream.datapoints['bitrate'] = restoreNormalizedValue(norm_bitrate, 2985984000, 2488320000)
+        self.db_stream.datapoints['framerate'] = restoreNormalizedValue(norm_framerate, 30, 25)
 
         self.db_stream.datapoints["quality_estimate"] = float(quality_estimate[0][0])    # minor reformat of quality_estimate to float for DB compatibility
         #print(self.db_stream.datapoints)
@@ -95,6 +101,7 @@ class NewMetricEventHandler(PatternMatchingEventHandler):
         datapointsstr = ""
         for metric in self.db_stream.datapoints:
             datapointsstr += str(self.db_stream.datapoints[metric]) + ";"
+        
         self.db_stream.updateLogString(datapointsstr + "|")
         self.db_stream.injectLogString()
 
@@ -128,8 +135,8 @@ def getMetrics(path, model_path, unused_metrics):
     
     # set up database connection
     try:
-        connectionDB = mysql.connector.connect(user='#', password='#', database='video_analysis_db',
-                              host='#',
+        connectionDB = mysql.connector.connect(user='disctest', password='password', database='discoveryproject',
+                              host='localhost',
                        )
         print("Connection String Opened successfully")
     except Exception as e:
@@ -155,6 +162,12 @@ def getMetrics(path, model_path, unused_metrics):
         observer.stop()
         connectionDB.close()
     observer.join()
+
+def restoreNormalizedValue(normValue, origMax, origMin):
+    normMin, normMax = 0, 1
+    origValue = ((normValue - normMin) / (normMax - normMin)) * \
+        (origMax - origMin) + origMin
+    return origValue
 
 if __name__ == "__main__":
     #getMetrics("./quality-metrics/", model_path="./savedModels/feedfw-nn-2022-06-09_18-30-34/")
