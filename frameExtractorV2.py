@@ -312,7 +312,7 @@ def sampleStream(in_file, output_path, output_type):
     # run following command on second computer (the one streaming to receiver)
     #   ffmpeg -list_devices true -f dshow -i dummy
     # look for webcam device name in results of above command then run:
-    #   ffmpeg -f dshow -i video="__DEVICENAMEHERE__" -vcodec libx264 -f h264 udp://__IPADDRESS__:__UDPPORT__
+    #   ffmpeg -f dshow -i video="__DEVICENAMEHERE__" -vcodec libx264 -f mpegts udp://__IPADDRESS__:__UDPPORT__
     # Example of above: ffmpeg -f dshow -i video="Integrated Webcam" -vcodec libx264 -f h264 udp://10.0.0.30:9090
 
     if str(output_type).lower() == "mp4":
