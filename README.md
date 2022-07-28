@@ -7,18 +7,18 @@ ffmpeg, accessible at https://ffmpeg.org/
 
 pip install the following:
 
-pip install pandas
-pip install tensorflow
-pip install watchdog
-pip install numpy
-pip install mysql-connector
-pip install mysql-connector-python
-pip install opencv-python
-pip install scikit-learn
-pip install matplotlib
-pip install scikit-image
-pip install google-api-python-client
-pip install pydrive
+pip install pandas \
+pip install tensorflow \
+pip install watchdog \
+pip install numpy \
+pip install mysql-connector \
+pip install mysql-connector-python \
+pip install opencv-python \
+pip install scikit-learn \
+pip install matplotlib \
+pip install scikit-image \
+pip install google-api-python-client \
+pip install pydrive \
 pip install pybrisque
 
 manually install the repo from https://github.com/VQEG/siti-tools
