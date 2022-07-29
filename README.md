@@ -4,6 +4,7 @@ To install, clone the repo onto your machine and install all dependencies.
 
 Dependencies:
 ffmpeg, accessible at https://ffmpeg.org/
+we used version 5.0.1 other versions may also work.
 
 pip install the following:
 
