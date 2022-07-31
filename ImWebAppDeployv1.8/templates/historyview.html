@@ -1,0 +1,43 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script type="text/javascript" src = "{{ url_for('static', filename='js/barcharthist.js') }}"></script>
+<title>History Data Viewer</title>
+</head>
+<body onload = "barChartHist('{{logstring}}')">
+<section id = "main">
+    <section id = "title_main">
+        <h2 id = "title_top">
+            History Data Viewer
+            <h3 id = "name">Stream_id: {{ streamid }}</h3>
+            <h3 id = "name">Location: {{ locationid }}</h3>
+        </h2>
+    </section>
+        <h3 id = "name">Quality Estimate</h3>
+        <canvas id="myChart6" style="width:100%"></canvas>
+        <canvas id="myChart" style="width:100%"></canvas>
+        <canvas id="myChart2" style="width:100%"></canvas>
+        <canvas id="myChart3" style="width:100%"></canvas>
+        <h3 id = "name">Quality Metrics</h3>
+        <canvas id="myChart4" style="width:100%"></canvas>
+        <h3 id = "name">AGH Quality Metrics</h3>
+        <canvas id="myChart5" style="width:100%"></canvas>
+    <div id = "main_text_viewer">
+        
+    <div id = "main_text_viewer">
+
+        
+    </div>
+</section>
+<section id = "info">
+<h2>Florida Atlantic University</h2>
+<h2>College of Engineering and Computer Science</h2>
+<h2>ED Group 4</h2>
+</section>
+
+
+</body>
+</html>  

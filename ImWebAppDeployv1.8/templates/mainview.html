@@ -1,0 +1,56 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script type="text/javascript" src = "{{ url_for('static', filename='js/barchart.js') }}"></script>
+    <script type="text/javascript" src = "{{ url_for('static', filename='js/hub.js') }}"></script>
+<title>Live Data Viewer</title>
+</head>
+<body onload = "makeChart('{{streamvalues}}')">
+<section id = "main">
+    <section id = "title_main">
+        <h2 id = "title_top">
+            Live Data Viewer<br>
+        <h3 id = "name">Stream_id: {{ namedata[1] }}</h3>
+        <h3 id = "name">Location: {{ namedata[2] }}</h3>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg> Note: this page refreshes every 15 seconds
+        </h2>
+    </section>
+        <h3 id = "dataname">Bitrate: {{ streamdata[0] }}</h3>
+        <h3 id = "dataname">Frame Rate (fps): {{ streamdata[1] }}</h3>
+        <h3 id = "dataname">Resolution: {{ streamdata[2] }}</h3>
+        <canvas id="myChart" style="width:100%"></canvas>
+    <div id = "main_text_viewer">
+       
+        {% for item in streamvaluesformated %}
+            {{ item[0] }} : {{ item[1] }}
+            
+            <br>
+        {% endfor %}
+        
+    </div>
+</section>
+<section id = "info">
+<h2>Florida Atlantic University</h2>
+<h2>College of Engineering and Computer Science</h2>
+<h2>ED Group 4</h2>
+</section>
+<div class="footer">
+    <p><a onclick = "redirect('historyview+{{ token }}+{{user1}}+{{ namedata[1] }}+{{ namedata[2] }}')" style="cursor: pointer; cursor: hand;">Click to view history</a></p>
+  </div>
+
+<script>
+    
+        var timer;
+        timer = setInterval(function() {
+            location.reload();
+        }, 15000);
+    
+</script>
+
+</body>
+</html>  

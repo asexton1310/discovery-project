@@ -1,0 +1,129 @@
+body {
+    background-color: #12232E;
+    padding-top: 2%;
+}
+h1{
+    color: #4DA8DA;
+    margin: auto;
+    padding: 10px;
+    text-align: center;
+}
+
+#main{
+    background-color: #203647;
+    color: #EEFBFB;
+    margin: auto;
+    width:75%;
+    font-size: larger;
+    border: 3px solid #007CC7;
+    padding: 10px;
+    border-radius: 25px;
+
+    
+}
+#dataname{
+    font-size: large;
+    font-weight: bolder;
+    color: lightcoral;
+}
+
+#title_top{
+    font-size: larger;
+    text-align: center;
+}
+
+h2{
+    font-size: large;
+    font-weight: bold;
+}
+#name{
+    font-size: large;
+    font-weight: bolder;
+    color: #4DA8DA;
+}
+#title_main{
+    border-radius: 25px;
+    padding: 5px;
+    text-align: center;
+    background-color: #12232E;
+}
+#sign_in{
+    border-radius: 25px;
+    padding: 5px;
+    text-align: center;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+}
+#info{
+    background-color: #203647;
+    color: #EEFBFB;
+    margin: auto;
+    text-align: center;
+    width: 50%;
+    padding: 10px;
+    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 25px;
+}
+#main_text{
+    text-align: center;
+    font-weight: bold;
+    padding: 1%;
+    color: #EEFBFB;
+}
+
+#main_button{
+    text-align: center;
+    font-weight: bold;
+    padding: 1%;
+    color: #EEFBFB;
+    background-color: #12232E;
+    padding: 5px;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+#main_text_viewer{
+    display: flex;
+    text-align: center;
+    font-weight: bold;
+    padding: 1%;
+    color: #EEFBFB;
+    padding-bottom: 500px;
+    justify-content: center;
+}
+
+#myChart{
+    padding: 15px;
+}
+#myChart2{
+    padding: 15px;
+}
+#myChart3{
+    padding: 15px;
+}
+#myChart4{
+    padding: 15px;
+}
+#myChart5{
+    padding: 15px;
+}
+#myChart6{
+    padding: 15px;
+}
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #12232E;
+    color: white;
+    text-align: center;
+    font-weight: bolder;
+ }
+
+ #score{
+    font-weight: bolder;
+    align-items: center;
+    text-align: center;
+    color:orangered;
+ }

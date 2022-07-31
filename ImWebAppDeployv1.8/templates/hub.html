@@ -1,0 +1,88 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/hub.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Staatliches&display=swap" rel="stylesheet">
+    <script type="text/javascript" src = "{{ url_for('static', filename='js/hub.js') }}"></script>
+<title>Hub</title>
+</head>
+<section id = "main">
+    <section id = "title_main">
+        <h2 id = "title_top">
+            Main Hub<br>
+        </h2>
+        <h3 id = "name">Welcome {{user1}}</h3>
+    </section>
+    <div id = "main_text_viewer" class = "main_text_viewer">
+        <!--Open source button from https://freefrontend.com/css-buttons/-->
+        <div id = "button_hold1">
+        <button id = "live_main" class = "button live_main" onclick="togglestreams()" >Live Streams</button>
+        <div id = "scroll_live">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </svg> 
+              <p class="info">Select the live stream you would like to view</p>
+            <ul>
+                {% for item in stream_ids %}
+                <button id = "idbutton" class = "button buttonid" onclick="redirect('mainview+{{ token }}+{{user1}}+{{ item[0] }}+{{ item[1] }}')">
+                    {{ item[0] }} <br>Location: {{ item[1] }}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-compact-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M6.776 1.553a.5.5 0 0 1 .671.223l3 6a.5.5 0 0 1 0 .448l-3 6a.5.5 0 1 1-.894-.448L9.44 8 6.553 2.224a.5.5 0 0 1 .223-.671z"/>
+                      </svg>
+                </button><br>
+                {% endfor %}
+            </ul>
+        </div>
+        </div>
+    </br>
+    <div id = "button_hold2">
+    <button class = "button nextselect" onclick="togglestreamshistory()">History Viewer</button>
+    <div id = "scroll_history">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+          </svg> 
+          <p class="info">Select stream for history data</p>
+
+          
+        <ul>
+            {% for item in stream_idshist %}
+            <button id = "idbutton" class = "button buttonid" onclick="redirect('historyview+{{ token }}+{{user1}}+{{ item[0] }}+{{ item[1] }}')">
+                {{ item[0] }} <br>Location: {{ item[1] }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-compact-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M6.776 1.553a.5.5 0 0 1 .671.223l3 6a.5.5 0 0 1 0 .448l-3 6a.5.5 0 1 1-.894-.448L9.44 8 6.553 2.224a.5.5 0 0 1 .223-.671z"/>
+                  </svg>
+            </button><br>
+            {% endfor %}
+        </ul>
+    </div>
+    </div>
+    
+    <div id = "button_hold2">
+        <button class = "button nextselect" onclick="togglestreamsoverall()">Overall Metrics</button>
+        <div id = "scroll_overall">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </svg> 
+              <p class="info">Select stream for viewing overall quality</p>
+            <ul>
+                {% for item in stream_ids_unique %}
+                <button id = "idbutton" class = "button buttonid" onclick="redirect('overallview+{{ token }}+{{user1}}+{{ item }}')">
+                    {{ item }}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-compact-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M6.776 1.553a.5.5 0 0 1 .671.223l3 6a.5.5 0 0 1 0 .448l-3 6a.5.5 0 1 1-.894-.448L9.44 8 6.553 2.224a.5.5 0 0 1 .223-.671z"/>
+                      </svg>
+                </button><br>
+                {% endfor %}
+            </ul>
+        </div>
+        </div>
+    </div>
+</section>
+<section id = "info">
+<h2>Florida Atlantic University</h2>
+<h2>College of Engineering and Computer Science</h2>
+<h2>ED Group 4</h2>
+</section>
+</body>
+</html>  
