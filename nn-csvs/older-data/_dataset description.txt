@@ -1,0 +1,40 @@
+Datasets used:
+
+LIVE VQC database:
+Z. Sinno and A.C. Bovik, "Large-Scale Study of Perceptual Video Quality,” IEEE Transactions on Image Processing, vol. 28, no. 2, pp. 612-627, February 2019.
+Z. Sinno and A.C. Bovik, "Large Scale Subjective Video Quality Study,” 2018 IEEE International Conference on Image Processing, Athens, Greece, October 2018.
+Z. Sinno and A.C. Bovik, "LIVE Video Quality Challenge Database", Online: http://live.ece.utexas.edu/research/LIVEVQC/index.html, 2018.
+
+LIVE-APV Livestream database:
+Z. Shang, J. P. Ebenezer, Y. Wu, H. Wei, S. Sethuraman and A. C. Bovik, "Study of the Subjective and Objective Quality of High Motion Live Streaming Videos," in IEEE Transactions on Image Processing, vol. 31, pp. 1027-1041, 2022, doi: 10.1109/TIP.2021.3136723.
+Z. Shang, J. P. Ebenezer, A. C. Bovik, Y. Wu, H. Wei and S. Sethuraman, "Assessment of Subjective and Objective Quality of Live Streaming Sports Videos," 2021 Picture Coding Symposium (PCS), 2021, pp. 1-5, doi: 10.1109/PCS50896.2021.9477502.
+Z. Shang, J.P. Ebenezer, Y. Wu, H. Wei, S. Sethuraman, and A. C. Bovik, "LIVE-APV Live Video Streaming Database," Online: http://live.ece.utexas.edu/research/LIVE_APV_Study/apv_index.html, 2020.
+
+The videos in these datasets are not included in our project files due to them containing over 800GB of videos. Instead, we have included the CSV files that we created by running our quality metric extractors on the videos in these databases. To download the databases, visit the web links described above.
+
+Description of the CSV files:
+
+live-nrqe-wk2.csv  - This file contains the metrics we used during week 2 for the 585 videos in the VQC dataset. It contains an earlier version of the color metric where results are not aggregated into a single score.
+
+live-nrqe-wk4.csv  - This file contains the metrics we used during week 4 for 584 of the 585 videos in the VQC dataset. It contains an earlier version of the color and contrast metrics where results are not aggregated into a single score. It contains additional metrics (contrast, ltp) compared to week 2.
+
+live-nrqe-wk6.csv  - This file contains the metrics we used during week 6 for 584 of the 585 videos in the VQC dataset. The color and contrast metrics are aggregated into a single score. It contains additional metrics (AGH metrics, SI, TI) compared to week 4. A few entries contain nan results for the AGH metrics, making this file unsuitable for training.
+
+live-nrqe-wk6-no-nan.csv  - This file contains the metrics we used during week 6 for 557 of the 585 videos in the VQC dataset. It is based on live-nrqe-wk6.csv but entries with any nan metrics are removed. 
+
+live-nrqe-wk6-no-nan-remove0.csv  - This file is identical to live-nrqe-wk6-no-nan.csv except with AGH metrics that returned 0 for most entries (avg_letterBox, avg_pillarBox, avg_blackout, avg_freezing) removed.
+
+live-nrqe-wk6-no-nan-replace.csv  - This file is identical to live-nrqe-wk6-no-nan.csv except with metrics that are duplicated by one of the AGH metrics removed (blockiness, blurriness, contrast, noise, flicker).
+
+live-nrqe-wk6-no-nan-replace-remove0.csv  - This file is identical to live-nrqe-wk6-no-nan-replace.csv except with AGH metrics that returned 0 for most entries (avg_letterBox, avg_pillarBox, avg_blackout, avg_freezing) removed.
+
+live-ls-nrqe-wk7.csv - This file contains all 315 entries in the Livestream dataset and the metrics for these entries.
+
+live-ls-nrqe-wk7-complete.csv - This file contains all 335 entries downloaded with the Livestream dataset and the metrics for these entries. It includes 20 additional entries that were not used in our project because they did not have corresponding MOS included in the download.
+
+live-nrqe-wk7.csv  - This file contains both the VQC entries from the live-nrqe-wk6-no-nan.csv file and the entire Livestream dataset.
+
+live-vqc-nrqe-wk7.csv  - This file is identical to the live-nrqe-wk6-no-nan.csv file, bit renamed to clearly indicate which dataset is included in the file.
+
+
+
