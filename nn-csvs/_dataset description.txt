@@ -29,3 +29,5 @@ live-vqc-nrqe-normalize2.csv  - This file contains 557 of the 585 videos in the 
 live-vqc-nrqe-normalize2-BrFrRes.csv  - This file contains 557 of the 585 videos in the VQC dataset and uses the minimum and maximum values for the AGH metrics in the dataset to normalize these metrics. This file also contains bitrate, framerate, and resolution for these videos.
 
 older-data folder  - This contains additional CSV files used earlier in our project. They use older versions of our quality metric extractors or are missing metrics that we introduced later in development. 
+
+other csv files in this folder were intermediary files used as a step in creating one or more of the other files
