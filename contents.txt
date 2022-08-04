@@ -1,0 +1,61 @@
+Description of contents of this folder
+
+Calculate_Agh_Metrics - This folder contains the necessary files to run the AGH tools. It contains files for both Windows and Linux, the extractMetricsFromAGHToolWin.py file should be redundant, since extractMetricsFromAGHTool.py supports both Windows and Linux, but it was kept here to be safe.
+
+Calculate_TA_&_Flickering - This folder contains an older version of the Calculate_AGH_Metrics folder that only contains files for running the AGH Metrics on Linux.
+
+ExtraFiles - This folder contains many files that are old or unused in our final project's system, as well as some files that were only used in testing very early in our project. More details on these files can be found inside this folder's contents file
+
+finishedSamples - This folder is empty, because it is the folder that sampleUploader.py watches and uses to upload videos to Google Drive
+
+ImWebAppDeployv1.8 - This folder contains the necessary files and information for setting up the data viewer subsystem. See the readme inside for more information
+
+qualityextractor - This folder contains files for running a few different versions of the quality extractor. The main folder contains an older version of the quality_extractor.py file and some of its dependencies. the pngs subfolder contains quality_extractor_pngs.py which extracts frame samples from a live stream and stores them as png files. the mp4s subfolder contains quality_extractor_mp4s.py which extracts video samples from a live stream and stores them as mp4 files.
+
+quality-metrics - This folder is empty, because it is the folder that model_predict.py watches for the quality metrics csv files which it reads from to make quality estimates.
+
+raw-frames - This folder is empty, because it is the folder that all versions of the quality extractor watch for live stream samples, which it extracts quality metrics from.
+
+savedModels - This folder contains trained and saved instances of our quality estimation model at various stages of development. This is necessary for our system to load and use a model to make quality estimates. The live-ls-nrqe-final-2022-07-19_22-49-23 subfolder contains our final version of the model. The metrics subfolder contains training logs listing our model evaluation metrics. The plots subfolder contains plots of the metrics during training.
+
+bitstream.py - This file is used to extract the bitrate, framerate, and resolution metrics
+
+block.py - This file is used to extract the blockiness metrics
+
+blurv3. - This file is used to extract the blurriness metrics
+
+client_secret_drive.json - This file is used in uploading stream samples to Google Drive, it is necessary to get credentials from Google Cloud's console and update this file before using our system to upload files to a Google Drive.
+
+contrastAndColorMetric.py - This file is used to extract the color metric, and contains an older version of the contrast metric
+
+contrastNew.py - This file is used to extract the contrast metric
+
+custom_tf_metrics.py - This file contains the custom model evaluation metrics of PLCC and SROCC since they are not standard metrics in TensorFlow. This is necessary for our system to load the trained quality estimation models and train new models using these evaluation metrics
+
+Database Format for Quality Metrics.pdf - This file contains instructions on setting up a MySQL database like the one we used in development.
+
+frameExtraction.py - This file contains an older version of the stream sampler in frameExtractorV2.py, however, it was still used by some versions of the quality extractor for testing and preparing our datasets.
+
+frameExtractorV2.py - This file contains the updated version of the stream sampler.
+
+Google.py - This file contains necessary functions for the Google APIs used by the sample uploader.
+
+LTPExtractionMetric.py - This file is used to extract the LTP metric
+
+model_predict.py - This file is used to load our quality estimation model and make quality estimates. It also uploads data to the database.
+
+nn.py - This file was used to train the quality estimation model. While it is not directly used in the final system, it was used to train all versions of the model.
+
+noisev1.py - This file is used to extract the noise metric
+
+nrqe_metrics.py - This file is used to extract the BRISQUE metric. It also contains an older and unused temporal flickering metric
+
+openh264-1.8.0-win64.dll - This file may be necessary for FFmpeg to decode or encode openH264 formats on Windows. This was necessary earlier in our project, but may not be necessary now. We kept it out of caution.
+
+overall_qe.py - This file contains the simple function for computing the overall quality estimate. It also contains a simple database accessor function for testing the quality estimate.
+
+sampleUploader.py - This file uploads the stream samples to Google Drive 
+
+sitiExtraction.py - This file is used to extract the SI and TI metrics
+
+sqlconnectorFINAL.py - This file contains the final version of the code we used to upload quality metrics and quality estimates to the database
