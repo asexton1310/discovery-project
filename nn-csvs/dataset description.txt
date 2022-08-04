@@ -1,0 +1,31 @@
+Datasets used:
+
+LIVE VQC database:
+Z. Sinno and A.C. Bovik, "Large-Scale Study of Perceptual Video Quality,” IEEE Transactions on Image Processing, vol. 28, no. 2, pp. 612-627, February 2019.
+Z. Sinno and A.C. Bovik, "Large Scale Subjective Video Quality Study,” 2018 IEEE International Conference on Image Processing, Athens, Greece, October 2018.
+Z. Sinno and A.C. Bovik, "LIVE Video Quality Challenge Database", Online: http://live.ece.utexas.edu/research/LIVEVQC/index.html, 2018.
+
+LIVE-APV Livestream database:
+Z. Shang, J. P. Ebenezer, Y. Wu, H. Wei, S. Sethuraman and A. C. Bovik, "Study of the Subjective and Objective Quality of High Motion Live Streaming Videos," in IEEE Transactions on Image Processing, vol. 31, pp. 1027-1041, 2022, doi: 10.1109/TIP.2021.3136723.
+Z. Shang, J. P. Ebenezer, A. C. Bovik, Y. Wu, H. Wei and S. Sethuraman, "Assessment of Subjective and Objective Quality of Live Streaming Sports Videos," 2021 Picture Coding Symposium (PCS), 2021, pp. 1-5, doi: 10.1109/PCS50896.2021.9477502.
+Z. Shang, J.P. Ebenezer, Y. Wu, H. Wei, S. Sethuraman, and A. C. Bovik, "LIVE-APV Live Video Streaming Database," Online: http://live.ece.utexas.edu/research/LIVE_APV_Study/apv_index.html, 2020.
+
+The videos in these datasets are not included in our project files due to them containing over 800GB of videos. Instead, we have included the CSV files that we created by running our quality metric extractors on the videos in these databases. To download the databases, visit the web links described above.
+
+Description of the CSV files:
+
+live-ls-nrqe-BrFrRes.csv  - This file contains only the 315 videos in the Livestream dataset using the minimums and maximums specified on the AGH tool's website ( https://qoe.agh.edu.pl/indicators/ ) for normalizing the AGH metrics. It also includes bitrate and framerate for these videos. Resolution is not included despite being listed in the filename since it is uniform at 3840x2160 across all videos in the Livestream dataset.
+
+live-ls-nrqe-normalize2.csv  - This file contains only the 315 videos in the Livestream dataset using the minimum and maximum values for the AGH metrics in the dataset to normalize these metrics. Additionally, this does not contain bitrate, framerate, or resolution metrics.
+
+live-ls-nrqe-normalize2-BrFrRes.csv This file contains only the 315 videos in the Livestream dataset using the minimum and maximum values for the AGH metrics in the dataset to normalize these metrics. This file also includes bitrate and framerate for these videos. This was the dataset used to train our final version of the quality estimation model.
+
+live-nrqe-normalize2.csv  - This file contains most of the VQC dataset and the entire Livestream dataset for a total of 872 videos. It uses the minimum and maximum values for for the AGH metrics in the dataset to normalize these metrics. This does not contain bitrate, framerate, or resolution metrics.
+
+live-nrqe-normalize2-BrFrRes.csv  - This file contains most of the VQC dataset and the entire Livestream dataset for a total of 872 videos. It uses the minimum and maximum values for for the AGH metrics in the dataset to normalize these metrics. This contains bitrate, framerate, and resolution metrics for all 872 videos.
+
+live-vqc-nrqe-normalize2.csv  - This file contains 557 of the 585 videos in the VQC dataset and uses the minimum and maximum values for the AGH metrics in the dataset to normalize these metrics. This file does not contain bitrate, framerate, or resolution for these videos.
+
+live-vqc-nrqe-normalize2-BrFrRes.csv  - This file contains 557 of the 585 videos in the VQC dataset and uses the minimum and maximum values for the AGH metrics in the dataset to normalize these metrics. This file also contains bitrate, framerate, and resolution for these videos.
+
+older-data folder  - This contains additional CSV files used earlier in our project. They use older versions of our quality metric extractors or are missing metrics that we introduced later in development. 
